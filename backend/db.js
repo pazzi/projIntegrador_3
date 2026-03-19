@@ -69,6 +69,7 @@ async function ensureTables() {
       nome VARCHAR(120) NOT NULL,
       descricao TEXT NULL,
       valor DECIMAL(10, 2) NOT NULL,
+      estoque INT NOT NULL DEFAULT 0,
       data DATE NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
@@ -152,11 +153,32 @@ async function ensureConstraintIfMissing(tableName, constraintName, statement) {
 
 async function ensureSchemaUpgrades() {
   await ensureColumnIfMissing('clientes', 'usuario_id', 'usuario_id INT NULL UNIQUE AFTER id');
+  await ensureColumnIfMissing('produtos', 'estoque', 'estoque INT NOT NULL DEFAULT 0 AFTER valor');
   await ensureConstraintIfMissing(
     'clientes',
     'fk_clientes_usuario',
     'ALTER TABLE clientes ADD CONSTRAINT fk_clientes_usuario FOREIGN KEY (usuario_id) REFERENCES usuarios(id)'
   );
+
+  const [[estoqueInfo]] = await pool.query(
+    `
+      SELECT COUNT(*) AS totalProdutos, COALESCE(SUM(estoque), 0) AS estoqueTotal
+      FROM produtos
+    `
+  );
+
+  if (Number(estoqueInfo.totalProdutos) > 0 && Number(estoqueInfo.estoqueTotal) === 0) {
+    await pool.query(`
+      UPDATE produtos
+      SET estoque = CASE nome
+        WHEN 'Água Mineral 20L' THEN 80
+        WHEN 'Água Mineral 10L' THEN 60
+        WHEN 'Gás de Cozinha 13kg' THEN 30
+        WHEN 'Suporte para Galão' THEN 20
+        ELSE 15
+      END
+    `);
+  }
 }
 
 async function seedIfEmpty() {
@@ -191,12 +213,12 @@ async function seedIfEmpty() {
 
   if (produtosCount.total === 0) {
     await pool.query(`
-      INSERT INTO produtos (nome, descricao, valor, data)
+      INSERT INTO produtos (nome, descricao, valor, estoque, data)
       VALUES
-        ('Água Mineral 20L', 'Galão de água mineral 20 litros', 12.00, CURDATE()),
-        ('Água Mineral 10L', 'Galão de água mineral 10 litros', 8.00, CURDATE()),
-        ('Gás de Cozinha 13kg', 'Botijão de gás GLP 13kg', 110.00, CURDATE()),
-        ('Suporte para Galão', 'Suporte reforçado para galão de água', 35.00, CURDATE())
+        ('Água Mineral 20L', 'Galão de água mineral 20 litros', 12.00, 80, CURDATE()),
+        ('Água Mineral 10L', 'Galão de água mineral 10 litros', 8.00, 60, CURDATE()),
+        ('Gás de Cozinha 13kg', 'Botijão de gás GLP 13kg', 110.00, 30, CURDATE()),
+        ('Suporte para Galão', 'Suporte reforçado para galão de água', 35.00, 20, CURDATE())
     `);
   }
 

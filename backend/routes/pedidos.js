@@ -2,7 +2,13 @@ const express = require('express');
 const { getPool } = require('../db');
 const { authMiddleware, requireRole } = require('../middlewares/auth');
 const { validarPayloadPedido } = require('../validators/pedidos');
-const { montarPedidos, buscarPedidoPorId, salvarItensPedido } = require('../services/pedidos');
+const {
+  montarPedidos,
+  buscarPedidoPorId,
+  buscarItensPedido,
+  salvarItensPedido,
+  sincronizarEstoquePedido
+} = require('../services/pedidos');
 const { buscarClientePorUsuarioId } = require('../services/clientes');
 
 const router = express.Router();
@@ -259,6 +265,9 @@ router.post('/pedidos', requireRole(['admin']), async (req, res) => {
     await connection.beginTransaction();
 
     const { clienteId, data, hora, observacoes, status, produtos } = req.body;
+    const statusPedido = status || 'pendente';
+    await sincronizarEstoquePedido(connection, [], 'cancelado', produtos, statusPedido);
+
     const [result] = await connection.query(
       `
         INSERT INTO pedidos (cliente_id, usuario_id, entregador_id, data_pedido, hora_pedido, data_entrega, status, observacoes)
@@ -271,7 +280,7 @@ router.post('/pedidos', requireRole(['admin']), async (req, res) => {
         data,
         hora || null,
         data,
-        status || 'pendente',
+        statusPedido,
         observacoes || ''
       ]
     );
@@ -313,6 +322,30 @@ router.put('/pedidos/:id', requireRole(['admin']), async (req, res) => {
     await connection.beginTransaction();
 
     const { clienteId, data, hora, observacoes, status, produtos } = req.body;
+    const [pedidoAtualRows] = await connection.query(
+      `
+        SELECT id, status
+        FROM pedidos
+        WHERE id = ?
+        LIMIT 1
+        FOR UPDATE
+      `,
+      [pedidoId]
+    );
+
+    if (pedidoAtualRows.length === 0) {
+      await connection.rollback();
+      return res.status(404).json({
+        sucesso: false,
+        mensagem: 'Pedido nao encontrado'
+      });
+    }
+
+    const pedidoAtual = pedidoAtualRows[0];
+    const itensAtuais = await buscarItensPedido(connection, pedidoId);
+    const statusPedido = status || 'pendente';
+    await sincronizarEstoquePedido(connection, itensAtuais, pedidoAtual.status, produtos, statusPedido);
+
     const [updateResult] = await connection.query(
       `
         UPDATE pedidos
@@ -324,7 +357,7 @@ router.put('/pedidos/:id', requireRole(['admin']), async (req, res) => {
         data,
         hora || null,
         data,
-        status || 'pendente',
+        statusPedido,
         observacoes || '',
         pedidoId
       ]
@@ -360,26 +393,49 @@ router.put('/pedidos/:id', requireRole(['admin']), async (req, res) => {
 });
 
 router.delete('/pedidos/:id', requireRole(['admin']), async (req, res) => {
-  try {
-    const pool = getPool();
-    const [result] = await pool.query('DELETE FROM pedidos WHERE id = ?', [Number(req.params.id)]);
+  const pool = getPool();
+  const connection = await pool.getConnection();
 
-    if (result.affectedRows === 0) {
+  try {
+    const pedidoId = Number(req.params.id);
+    await connection.beginTransaction();
+
+    const [pedidoRows] = await connection.query(
+      `
+        SELECT id, status
+        FROM pedidos
+        WHERE id = ?
+        LIMIT 1
+        FOR UPDATE
+      `,
+      [pedidoId]
+    );
+
+    if (pedidoRows.length === 0) {
+      await connection.rollback();
       return res.status(404).json({
         sucesso: false,
         mensagem: 'Pedido nao encontrado'
       });
     }
 
+    const itensAtuais = await buscarItensPedido(connection, pedidoId);
+    await sincronizarEstoquePedido(connection, itensAtuais, pedidoRows[0].status, [], 'cancelado');
+    await connection.query('DELETE FROM pedidos WHERE id = ?', [pedidoId]);
+    await connection.commit();
+
     return res.json({
       sucesso: true
     });
   } catch (error) {
+    await connection.rollback();
     return res.status(500).json({
       sucesso: false,
       mensagem: 'Erro ao excluir pedido',
       detalhe: error.message
     });
+  } finally {
+    connection.release();
   }
 });
 

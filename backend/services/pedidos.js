@@ -96,25 +96,97 @@ async function buscarPedidoPorId(id) {
   return pedidos[0] || null;
 }
 
+async function buscarItensPedido(connection, pedidoId) {
+  const [rows] = await connection.query(
+    `
+      SELECT produto_id AS produtoId, quantidade
+      FROM pedido_itens
+      WHERE pedido_id = ?
+      ORDER BY id ASC
+    `,
+    [pedidoId]
+  );
+
+  return rows.map((item) => ({
+    produtoId: Number(item.produtoId),
+    quantidade: Number(item.quantidade)
+  }));
+}
+
+function agruparQuantidadePorProduto(itens) {
+  return itens.reduce((mapa, item) => {
+    const produtoId = Number(item.produtoId);
+    const quantidadeAtual = mapa.get(produtoId) || 0;
+    mapa.set(produtoId, quantidadeAtual + Number(item.quantidade || 0));
+    return mapa;
+  }, new Map());
+}
+
+async function buscarProdutosPorIds(connection, produtoIds) {
+  if (produtoIds.length === 0) {
+    return [];
+  }
+
+  const [produtosDb] = await connection.query(
+    `
+      SELECT id, nome, valor, estoque
+      FROM produtos
+      WHERE id IN (?)
+      FOR UPDATE
+    `,
+    [produtoIds]
+  );
+
+  return produtosDb.map((produto) => ({
+    id: Number(produto.id),
+    nome: produto.nome,
+    valor: Number(produto.valor),
+    estoque: Number(produto.estoque)
+  }));
+}
+
+async function ajustarEstoque(connection, itens, operacao) {
+  const quantidadesPorProduto = agruparQuantidadePorProduto(itens);
+  const produtoIds = Array.from(quantidadesPorProduto.keys());
+  const produtosDb = await buscarProdutosPorIds(connection, produtoIds);
+
+  if (produtosDb.length !== produtoIds.length) {
+    throw new Error('Um ou mais produtos informados nao existem');
+  }
+
+  const produtoPorId = new Map(produtosDb.map((produto) => [produto.id, produto]));
+
+  for (const produtoId of produtoIds) {
+    const quantidade = quantidadesPorProduto.get(produtoId);
+    const produto = produtoPorId.get(produtoId);
+
+    if (operacao === 'debitar' && produto.estoque < quantidade) {
+      throw new Error(`Estoque insuficiente para o produto ${produto.nome}`);
+    }
+  }
+
+  for (const produtoId of produtoIds) {
+    const quantidade = quantidadesPorProduto.get(produtoId);
+    const ajuste = operacao === 'debitar' ? -quantidade : quantidade;
+    await connection.query(
+      `
+        UPDATE produtos
+        SET estoque = estoque + ?
+        WHERE id = ?
+      `,
+      [ajuste, produtoId]
+    );
+  }
+}
+
 async function salvarItensPedido(connection, pedidoId, produtos) {
   if (produtos.length === 0) {
     return;
   }
 
   const produtoIds = produtos.map((item) => Number(item.produtoId));
-
-  const [produtosDb] = await connection.query(
-    `
-      SELECT id, valor
-      FROM produtos
-      WHERE id IN (?)
-    `,
-    [produtoIds]
-  );
-
-  const valorPorProdutoId = new Map(
-    produtosDb.map((produto) => [produto.id, Number(produto.valor)])
-  );
+  const produtosDb = await buscarProdutosPorIds(connection, produtoIds);
+  const valorPorProdutoId = new Map(produtosDb.map((produto) => [produto.id, produto.valor]));
 
   if (valorPorProdutoId.size !== produtoIds.length) {
     throw new Error('Um ou mais produtos informados nao existem');
@@ -134,6 +206,47 @@ async function salvarItensPedido(connection, pedidoId, produtos) {
     `,
     [values]
   );
+}
+
+async function sincronizarEstoquePedido(connection, itensAnteriores, statusAnterior, itensNovos, statusNovo) {
+  if (statusAnterior && statusAnterior !== 'cancelado' && itensAnteriores.length > 0) {
+    await ajustarEstoque(connection, itensAnteriores, 'creditar');
+  }
+
+  if (statusNovo !== 'cancelado' && itensNovos.length > 0) {
+    await ajustarEstoque(connection, itensNovos, 'debitar');
+  }
+}
+
+async function atualizarStatusPedidoComEstoque(connection, pedidoId, statusNovo) {
+  const [pedidos] = await connection.query(
+    `
+      SELECT id, status
+      FROM pedidos
+      WHERE id = ?
+      LIMIT 1
+      FOR UPDATE
+    `,
+    [pedidoId]
+  );
+
+  if (pedidos.length === 0) {
+    return null;
+  }
+
+  const pedido = pedidos[0];
+  const statusAnterior = pedido.status;
+
+  if (statusAnterior === statusNovo) {
+    await connection.query('UPDATE pedidos SET status = ? WHERE id = ?', [statusNovo, pedidoId]);
+    return { mudou: false };
+  }
+
+  const itensPedido = await buscarItensPedido(connection, pedidoId);
+  await sincronizarEstoquePedido(connection, itensPedido, statusAnterior, itensPedido, statusNovo);
+  await connection.query('UPDATE pedidos SET status = ? WHERE id = ?', [statusNovo, pedidoId]);
+
+  return { mudou: true };
 }
 
 async function listarEntregas({ entregadorId, role, somenteHoje = true, status } = {}) {
@@ -184,7 +297,10 @@ async function listarEntregas({ entregadorId, role, somenteHoje = true, status }
 module.exports = {
   montarPedidos,
   buscarPedidoPorId,
+  buscarItensPedido,
   salvarItensPedido,
+  sincronizarEstoquePedido,
+  atualizarStatusPedidoComEstoque,
   listarEntregas,
   normalizarEntrega
 };

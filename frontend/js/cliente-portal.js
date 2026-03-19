@@ -115,7 +115,8 @@ function normalizarProdutosCliente(listaProdutos) {
         ? listaProdutos.map((produto) => ({
             id: Number(produto.id),
             nome: produto.nome,
-            valor: Number(produto.valor || 0)
+            valor: Number(produto.valor || 0),
+            estoque: Number(produto.estoque || 0)
         }))
         : [];
 }
@@ -130,6 +131,7 @@ function atualizarOpcoesProdutosCliente() {
     });
 
     document.getElementById('btn-adicionar-produto').disabled = produtosCliente.length === 0;
+    validarQuantidadesProdutosCliente();
 }
 
 async function carregarPedidosCliente() {
@@ -201,9 +203,16 @@ function adicionarProdutoCliente(produtoId = '', quantidade = 1) {
         select.value = String(produtoId);
     }
 
-    select.addEventListener('change', calcularTotalCliente);
-    div.querySelector('.produto-quantidade').addEventListener('input', calcularTotalCliente);
+    select.addEventListener('change', function () {
+        atualizarOpcoesProdutosCliente();
+        calcularTotalCliente();
+    });
+    div.querySelector('.produto-quantidade').addEventListener('input', function () {
+        validarQuantidadesProdutosCliente();
+        calcularTotalCliente();
+    });
     atualizarBotoesRemoverCliente();
+    validarQuantidadesProdutosCliente();
     calcularTotalCliente();
 }
 
@@ -221,8 +230,62 @@ function preencherOpcoesSelectProdutoCliente(select) {
     produtosCliente.forEach((produto) => {
         const option = document.createElement('option');
         option.value = produto.id;
-        option.textContent = `${produto.nome} - R$ ${produto.valor.toFixed(2)}`;
+        option.textContent = formatarTextoProdutoCliente(produto, obterEstoqueDisponivelProdutoCliente(produto.id, select));
+        option.disabled = obterEstoqueDisponivelProdutoCliente(produto.id, select) <= 0 && select.value !== String(produto.id);
         select.appendChild(option);
+    });
+}
+
+function formatarTextoProdutoCliente(produto, estoqueDisponivel) {
+    if (estoqueDisponivel <= 0) {
+        return `${produto.nome} - R$ ${produto.valor.toFixed(2)} (sem estoque)`;
+    }
+
+    if (estoqueDisponivel <= 10) {
+        return `${produto.nome} - R$ ${produto.valor.toFixed(2)} (${estoqueDisponivel} un. - baixo estoque)`;
+    }
+
+    return `${produto.nome} - R$ ${produto.valor.toFixed(2)} (${estoqueDisponivel} un.)`;
+}
+
+function obterEstoqueDisponivelProdutoCliente(produtoId, selectAtual) {
+    const produto = produtosCliente.find((entry) => entry.id === Number(produtoId));
+    if (!produto) {
+        return 0;
+    }
+
+    let quantidadeSelecionada = 0;
+    document.querySelectorAll('#produtos-container-cliente .produto-item').forEach((item) => {
+        const select = item.querySelector('.produto-select');
+        if (select === selectAtual) {
+            return;
+        }
+
+        if (Number(select.value) === Number(produtoId)) {
+            quantidadeSelecionada += Number(item.querySelector('.produto-quantidade').value || 0);
+        }
+    });
+
+    return Math.max(produto.estoque - quantidadeSelecionada, 0);
+}
+
+function validarQuantidadesProdutosCliente() {
+    document.querySelectorAll('#produtos-container-cliente .produto-item').forEach((item) => {
+        const select = item.querySelector('.produto-select');
+        const inputQuantidade = item.querySelector('.produto-quantidade');
+        const produtoId = Number(select.value);
+
+        if (!produtoId) {
+            inputQuantidade.removeAttribute('max');
+            return;
+        }
+
+        const estoqueDisponivel = obterEstoqueDisponivelProdutoCliente(produtoId, select);
+        inputQuantidade.max = String(estoqueDisponivel);
+
+        if (Number(inputQuantidade.value || 0) > estoqueDisponivel) {
+            inputQuantidade.value = estoqueDisponivel > 0 ? String(estoqueDisponivel) : '';
+        }
     });
 }
 
@@ -262,9 +325,15 @@ async function salvarPedidoCliente(event) {
     event.preventDefault();
 
     const produtos = [];
+    let quantidadeInvalida = false;
     document.querySelectorAll('#produtos-container-cliente .produto-item').forEach((item) => {
         const produtoId = Number(item.querySelector('.produto-select').value);
         const quantidade = Number(item.querySelector('.produto-quantidade').value || 0);
+        const estoqueDisponivel = obterEstoqueDisponivelProdutoCliente(produtoId, item.querySelector('.produto-select'));
+
+        if (produtoId && quantidade > estoqueDisponivel) {
+            quantidadeInvalida = true;
+        }
 
         if (produtoId && quantidade > 0) {
             produtos.push({ produtoId, quantidade });
@@ -273,6 +342,11 @@ async function salvarPedidoCliente(event) {
 
     if (produtos.length === 0) {
         mostrarErro('Selecione ao menos um produto', document.getElementById('mensagem'));
+        return;
+    }
+
+    if (quantidadeInvalida) {
+        mostrarErro('A quantidade solicitada ultrapassa o estoque disponível', document.getElementById('mensagem'));
         return;
     }
 

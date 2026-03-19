@@ -1,7 +1,7 @@
 const express = require('express');
 const { getPool } = require('../db');
 const { authMiddleware, requireRole } = require('../middlewares/auth');
-const { listarEntregas } = require('../services/pedidos');
+const { listarEntregas, atualizarStatusPedidoComEstoque } = require('../services/pedidos');
 
 const router = express.Router();
 
@@ -316,47 +316,52 @@ router.put('/entregas/:id/status', requireRole(['admin', 'entregador']), async (
     }
 
     const pool = getPool();
+    const connection = await pool.getConnection();
 
-    if (req.usuario.tipo !== 'admin') {
-      const pertenceAoEntregador = await pedidoPertenceAoEntregador(id, req.usuario.id);
-      if (!pertenceAoEntregador) {
-        return res.status(403).json({
+    try {
+      if (req.usuario.tipo !== 'admin') {
+        const pertenceAoEntregador = await pedidoPertenceAoEntregador(id, req.usuario.id);
+        if (!pertenceAoEntregador) {
+          return res.status(403).json({
+            sucesso: false,
+            mensagem: 'Acesso nao autorizado'
+          });
+        }
+      }
+
+      await connection.beginTransaction();
+      const atualizacao = await atualizarStatusPedidoComEstoque(connection, id, status);
+
+      if (!atualizacao) {
+        await connection.rollback();
+        return res.status(404).json({
           sucesso: false,
-          mensagem: 'Acesso nao autorizado'
+          mensagem: 'Entrega nao encontrada'
         });
       }
-    }
 
-    const [result] = await pool.query(
-      `
-        UPDATE pedidos
-        SET status = ?
-        WHERE id = ?
-      `,
-      [status, id]
-    );
+      await connection.commit();
 
-    if (result.affectedRows === 0) {
-      return res.status(404).json({
-        sucesso: false,
-        mensagem: 'Entrega nao encontrada'
+      const [rows] = await pool.query(
+        `
+          SELECT id, status, observacoes
+          FROM pedidos
+          WHERE id = ?
+          LIMIT 1
+        `,
+        [id]
+      );
+
+      return res.json({
+        sucesso: true,
+        entrega: rows[0]
       });
+    } catch (error) {
+      await connection.rollback();
+      throw error;
+    } finally {
+      connection.release();
     }
-
-    const [rows] = await pool.query(
-      `
-        SELECT id, status, observacoes
-        FROM pedidos
-        WHERE id = ?
-        LIMIT 1
-      `,
-      [id]
-    );
-
-    return res.json({
-      sucesso: true,
-      entrega: rows[0]
-    });
   } catch (error) {
     return res.status(500).json({
       sucesso: false,

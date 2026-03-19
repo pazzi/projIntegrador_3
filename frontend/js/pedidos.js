@@ -116,7 +116,8 @@ async function carregarProdutos() {
         id: Number(produto.id),
         nome: produto.nome || '',
         preco: Number(produto.valor || 0),
-        descricao: produto.descricao || ''
+        descricao: produto.descricao || '',
+        estoque: Number(produto.estoque || 0)
     }));
 
     atualizarSelectsProdutos();
@@ -164,7 +165,9 @@ function atualizarSelectsProdutos() {
         produtos.forEach((produto) => {
             const option = document.createElement('option');
             option.value = produto.id;
-            option.textContent = `${produto.nome} - R$ ${produto.preco.toFixed(2)}`;
+            const estoqueDisponivel = obterEstoqueDisponivelProdutoPedido(produto.id, select);
+            option.textContent = formatarTextoProdutoPedido(produto, estoqueDisponivel);
+            option.disabled = estoqueDisponivel <= 0 && select.value !== String(produto.id);
             select.appendChild(option);
         });
 
@@ -173,7 +176,71 @@ function atualizarSelectsProdutos() {
         }
     });
 
+    validarQuantidadesProdutosPedido();
     calcularTotal();
+}
+
+function formatarTextoProdutoPedido(produto, estoqueDisponivel) {
+    if (estoqueDisponivel <= 0) {
+        return `${produto.nome} - R$ ${produto.preco.toFixed(2)} (sem estoque)`;
+    }
+
+    if (estoqueDisponivel <= 10) {
+        return `${produto.nome} - R$ ${produto.preco.toFixed(2)} (${estoqueDisponivel} un. - baixo estoque)`;
+    }
+
+    return `${produto.nome} - R$ ${produto.preco.toFixed(2)} (${estoqueDisponivel} un.)`;
+}
+
+function obterQuantidadeReservadaNaEdicao(produtoId) {
+    if (!pedidoEditando || !Array.isArray(pedidoEditando.produtos)) {
+        return 0;
+    }
+
+    return pedidoEditando.produtos
+        .filter((produto) => produto.id === Number(produtoId))
+        .reduce((total, produto) => total + Number(produto.quantidade || 0), 0);
+}
+
+function obterEstoqueDisponivelProdutoPedido(produtoId, selectAtual) {
+    const produto = produtos.find((entry) => entry.id === Number(produtoId));
+    if (!produto) {
+        return 0;
+    }
+
+    let quantidadeSelecionada = 0;
+    document.querySelectorAll('.produto-item').forEach((item) => {
+        const select = item.querySelector('.produto-select');
+        if (select === selectAtual) {
+            return;
+        }
+
+        if (Number(select.value) === Number(produtoId)) {
+            quantidadeSelecionada += Number(item.querySelector('.produto-quantidade').value || 0);
+        }
+    });
+
+    return Math.max(produto.estoque + obterQuantidadeReservadaNaEdicao(produtoId) - quantidadeSelecionada, 0);
+}
+
+function validarQuantidadesProdutosPedido() {
+    document.querySelectorAll('.produto-item').forEach((item) => {
+        const select = item.querySelector('.produto-select');
+        const inputQuantidade = item.querySelector('.produto-quantidade');
+        const produtoId = Number(select.value);
+
+        if (!produtoId) {
+            inputQuantidade.removeAttribute('max');
+            return;
+        }
+
+        const estoqueDisponivel = obterEstoqueDisponivelProdutoPedido(produtoId, select);
+        inputQuantidade.max = String(estoqueDisponivel);
+
+        if (Number(inputQuantidade.value || 0) > estoqueDisponivel) {
+            inputQuantidade.value = estoqueDisponivel > 0 ? String(estoqueDisponivel) : '';
+        }
+    });
 }
 
 function renderizarTabelaPedidos(listaPedidos) {
@@ -313,9 +380,16 @@ function adicionarProduto(produtoId = '', quantidade = 1) {
         select.value = String(produtoId);
     }
 
-    select.addEventListener('change', calcularTotal);
-    div.querySelector('.produto-quantidade').addEventListener('input', calcularTotal);
+    select.addEventListener('change', function () {
+        atualizarSelectsProdutos();
+        calcularTotal();
+    });
+    div.querySelector('.produto-quantidade').addEventListener('input', function () {
+        validarQuantidadesProdutosPedido();
+        calcularTotal();
+    });
     atualizarBotoesRemover();
+    validarQuantidadesProdutosPedido();
     calcularTotal();
 }
 
@@ -367,9 +441,15 @@ async function salvarPedido(event) {
     }
 
     const produtosPedido = [];
+    let quantidadeInvalida = false;
     document.querySelectorAll('.produto-item').forEach((item) => {
         const produtoId = item.querySelector('.produto-select').value;
         const quantidade = Number(item.querySelector('.produto-quantidade').value || 0);
+        const estoqueDisponivel = obterEstoqueDisponivelProdutoPedido(produtoId, item.querySelector('.produto-select'));
+
+        if (produtoId && quantidade > estoqueDisponivel) {
+            quantidadeInvalida = true;
+        }
 
         if (produtoId && quantidade > 0) {
             produtosPedido.push({
@@ -381,6 +461,11 @@ async function salvarPedido(event) {
 
     if (produtosPedido.length === 0) {
         mostrarErro('Adicione pelo menos um produto', document.getElementById('mensagem'));
+        return;
+    }
+
+    if (quantidadeInvalida) {
+        mostrarErro('A quantidade informada ultrapassa o estoque disponível', document.getElementById('mensagem'));
         return;
     }
 

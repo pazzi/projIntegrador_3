@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rota Klara - Estoque e Produtos</title>
+    <link rel="stylesheet" href="css/estilo.css" />
+  </head>
+  <body>
+    <div class="container-dashboard">
+      <header class="topo-pagina">
+        <div>
+          <h1>Produtos e Estoque</h1>
+          <p class="subtitulo-pagina">Cadastre itens, acompanhe saldo e ajuste o estoque disponível</p>
+        </div>
+        <div class="usuario-info">
+          <span id="nome-usuario"></span>
+          <button id="btn-logout" class="botao-perigo">Sair</button>
+        </div>
+      </header>
+
+      <nav class="barra-navegacao">
+        <button class="botao" onclick="window.location.href='index.html'">🏠 Dashboard</button>
+        <button class="botao" onclick="window.location.href='clientes.html'">👥 Clientes</button>
+        <button class="botao" onclick="window.location.href='pedidos.html'">📦 Pedidos</button>
+        <button class="botao ativo" onclick="window.location.href='produtos.html'">🧴 Estoque</button>
+      </nav>
+
+      <div id="mensagem" class="mensagem"></div>
+
+      <section class="card-container">
+        <article class="card">
+          <h3>Total de Produtos</h3>
+          <div class="numero" id="total-produtos">0</div>
+        </article>
+        <article class="card">
+          <h3>Unidades em Estoque</h3>
+          <div class="numero" id="total-estoque">0</div>
+        </article>
+        <article class="card">
+          <h3>Estoque Baixo</h3>
+          <div class="numero" id="produtos-baixo-estoque">0</div>
+        </article>
+      </section>
+
+      <section class="painel">
+        <div class="painel-topo">
+          <h2>Busca e filtros</h2>
+          <button id="btn-novo-produto" class="botao-sucesso">➕ Novo produto</button>
+        </div>
+
+        <div class="grid-filtros">
+          <div class="campo">
+            <label for="filtro-produto">Buscar por nome ou descrição</label>
+            <input id="filtro-produto" type="text" placeholder="Digite para filtrar" />
+          </div>
+          <div class="campo">
+            <label for="filtro-estoque">Situação do estoque</label>
+            <select id="filtro-estoque">
+              <option value="">Todos</option>
+              <option value="disponivel">Disponível</option>
+              <option value="baixo">Baixo estoque</option>
+              <option value="zerado">Sem estoque</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="acoes-linha">
+          <button id="btn-aplicar-filtros" class="botao">🔍 Aplicar filtros</button>
+          <button id="btn-limpar-filtros" class="botao">🧹 Limpar</button>
+        </div>
+      </section>
+
+      <section class="painel">
+        <div class="painel-topo">
+          <h2>Lista de produtos</h2>
+          <span id="contador-lista" class="contador-lista">0 registros</span>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Produto</th>
+              <th>Descrição</th>
+              <th>Valor</th>
+              <th>Estoque</th>
+              <th>Data</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="corpo-tabela-produtos"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <div id="modal-produto" class="modal">
+      <div class="modal-conteudo modal-largo">
+        <h3 id="titulo-modal-produto">Novo produto</h3>
+        <form id="form-produto">
+          <input id="produto-id" type="hidden" />
+
+          <div class="grid-formulario">
+            <div class="campo">
+              <label for="produto-nome">Nome</label>
+              <input id="produto-nome" type="text" required />
+            </div>
+            <div class="campo">
+              <label for="produto-valor">Valor</label>
+              <input id="produto-valor" type="number" min="0.01" step="0.01" required />
+            </div>
+            <div class="campo">
+              <label for="produto-estoque">Estoque</label>
+              <input id="produto-estoque" type="number" min="0" step="1" required />
+            </div>
+            <div class="campo">
+              <label for="produto-data">Data de referência</label>
+              <input id="produto-data" type="date" required />
+            </div>
+            <div class="campo campo-amplo">
+              <label for="produto-descricao">Descrição</label>
+              <textarea id="produto-descricao" rows="4" placeholder="Informações adicionais sobre o produto"></textarea>
+            </div>
+          </div>
+
+          <div class="acoes-linha">
+            <button type="submit" class="botao-sucesso">Salvar</button>
+            <button type="button" id="btn-cancelar-modal" class="botao-perigo">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="modal-excluir" class="modal">
+      <div class="modal-conteudo">
+        <h3>Excluir produto</h3>
+        <p id="mensagem-excluir"></p>
+        <div class="acoes-linha">
+          <button id="btn-confirmar-excluir" class="botao-perigo">Excluir</button>
+          <button id="btn-cancelar-excluir" class="botao">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/produtos.js"></script>
+  </body>
+</html>
