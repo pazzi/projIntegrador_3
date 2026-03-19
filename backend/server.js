@@ -8,7 +8,7 @@ const { DB_NAME, getPool, initializeDatabase } = require('./db');
 const app = express();
 const port = Number(process.env.PORT || 3000);
 const tokens = new Map();
-const frontendDir = path.resolve(__dirname, '../rotaklara-frontend');
+const frontendDir = path.resolve(__dirname, '../frontend');
 
 app.use(cors());
 app.use(express.json());

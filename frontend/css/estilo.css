@@ -333,25 +333,25 @@ button:hover, .botao:hover {
 /* Cards para o dashboard */
 .card-container {
     display: grid;                          /* Layout em grade */
-    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-    gap: 20px;                               /* Espaço entre cards */
-    margin-bottom: 30px;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;                               /* Espaço entre cards */
+    margin-bottom: 15px;
 }
 
 .card {
     background-color: white;
-    padding: 20px;
+    padding: 10px;
     border-radius: 10px;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
 }
 
 .card h3 {
     color: #0066cc;
-    margin-bottom: 10px;
+    margin-bottom: 5px;
 }
 
 .card .numero {
-    font-size: 2.5em;
+    font-size: 1.5em;
     font-weight: bold;
     color: #333;
 }
