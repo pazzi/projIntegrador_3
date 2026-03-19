@@ -1,0 +1,218 @@
+@startuml
+title Rota Klara - Diagrama de Classes
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+package "Dominio" {
+  class Usuario {
+    +id: int
+    +usuario: string
+    +nome: string
+    +senha: string
+    +role: string
+    +createdAt: datetime
+  }
+
+  class Cliente {
+    +id: int
+    +usuarioId: int
+    +cpf: string
+    +nome: string
+    +endereco: string
+    +latitude: decimal
+    +longitude: decimal
+    +email: string
+    +createdAt: datetime
+  }
+
+  class Produto {
+    +id: int
+    +nome: string
+    +descricao: text
+    +valor: decimal
+    +estoque: int
+    +estoqueMinimo: int
+    +data: date
+    +createdAt: datetime
+  }
+
+  class Pedido {
+    +id: int
+    +clienteId: int
+    +usuarioId: int
+    +entregadorId: int
+    +dataPedido: date
+    +horaPedido: time
+    +dataEntrega: date
+    +status: string
+    +observacoes: text
+    +createdAt: datetime
+  }
+
+  class PedidoItem {
+    +id: int
+    +pedidoId: int
+    +produtoId: int
+    +quantidade: int
+    +valorUnitario: decimal
+    +createdAt: datetime
+  }
+
+  class EntregadorLocalizacao {
+    +entregadorId: int
+    +latitude: decimal
+    +longitude: decimal
+    +atualizadoEm: datetime
+  }
+}
+
+package "Servicos e Infra" {
+  class DB {
+    +initializeDatabase()
+    +getPool()
+  }
+
+  class AuthUtils {
+    +hashPassword(password)
+    +verifyPassword(password, hash)
+    +isPasswordHashed(hash)
+  }
+
+  class AuthMiddleware {
+    +gerarToken(usuario)
+    +authMiddleware(req, res, next)
+    +requireRole(roles)
+    +loggingMiddleware(req, res, next)
+  }
+
+  class ClientesService {
+    +buscarClientePorUsuarioId(usuarioId)
+  }
+
+  class PedidosService {
+    +montarPedidos(whereClause, params)
+    +buscarPedidoPorId(id)
+    +buscarItensPedido(connection, pedidoId)
+    +salvarItensPedido(connection, pedidoId, produtos)
+    +sincronizarEstoquePedido(connection, itensAnteriores, statusAnterior, itensNovos, statusNovo)
+    +atualizarStatusPedidoComEstoque(connection, pedidoId, statusNovo)
+    +listarEntregas(opcoes)
+  }
+
+  class PedidosValidator {
+    +validarStatusPedido(status)
+    +validarPayloadPedido(payload, options)
+  }
+}
+
+package "Rotas Backend" {
+  class AuthRoutes
+  class ClientesRoutes
+  class ProdutosRoutes
+  class PedidosRoutes
+  class EntregasRoutes
+  class Server
+}
+
+package "Frontend" {
+  class DashboardPage
+  class ClientesPage
+  class PedidosPage
+  class ProdutosPage
+  class ClientePortalPage
+  class AuthPage
+  class ConfigJS {
+    +API_URL: string
+  }
+}
+
+Usuario "1" <-- "0..1" Cliente : usuario_id
+Usuario "1" <-- "0..*" Pedido : usuario_id
+Usuario "1" <-- "0..*" Pedido : entregador_id
+Usuario "1" <-- "0..1" EntregadorLocalizacao : entregador_id
+Cliente "1" <-- "0..*" Pedido : cliente_id
+Pedido "1" *-- "1..*" PedidoItem
+Produto "1" <-- "0..*" PedidoItem : produto_id
+
+DB ..> Usuario
+DB ..> Cliente
+DB ..> Produto
+DB ..> Pedido
+DB ..> PedidoItem
+DB ..> EntregadorLocalizacao
+
+ClientesService ..> DB
+ClientesService ..> Cliente
+ClientesService ..> Usuario
+
+PedidosService ..> DB
+PedidosService ..> Pedido
+PedidosService ..> PedidoItem
+PedidosService ..> Produto
+PedidosService ..> Cliente
+
+PedidosValidator ..> Pedido
+AuthMiddleware ..> Usuario
+AuthUtils ..> Usuario
+
+AuthRoutes ..> AuthUtils
+AuthRoutes ..> AuthMiddleware
+AuthRoutes ..> ClientesService
+AuthRoutes ..> Usuario
+AuthRoutes ..> Cliente
+
+ClientesRoutes ..> AuthMiddleware
+ClientesRoutes ..> Cliente
+
+ProdutosRoutes ..> AuthMiddleware
+ProdutosRoutes ..> Produto
+
+PedidosRoutes ..> AuthMiddleware
+PedidosRoutes ..> PedidosValidator
+PedidosRoutes ..> PedidosService
+PedidosRoutes ..> ClientesService
+PedidosRoutes ..> Pedido
+
+EntregasRoutes ..> AuthMiddleware
+EntregasRoutes ..> PedidosService
+EntregasRoutes ..> EntregadorLocalizacao
+EntregasRoutes ..> Pedido
+
+Server ..> AuthRoutes
+Server ..> ClientesRoutes
+Server ..> ProdutosRoutes
+Server ..> PedidosRoutes
+Server ..> EntregasRoutes
+Server ..> DB
+Server ..> AuthMiddleware
+
+AuthPage ..> ConfigJS
+DashboardPage ..> ConfigJS
+ClientesPage ..> ConfigJS
+PedidosPage ..> ConfigJS
+ProdutosPage ..> ConfigJS
+ClientePortalPage ..> ConfigJS
+
+PedidosPage ..> ProdutosRoutes : consome /api/produtos
+PedidosPage ..> PedidosRoutes : consome /api/pedidos
+ClientesPage ..> ClientesRoutes : consome /api/clientes
+ProdutosPage ..> ProdutosRoutes : consome CRUD /api/produtos
+ClientePortalPage ..> ProdutosRoutes : consome /api/produtos
+ClientePortalPage ..> PedidosRoutes : consome /api/cliente/*
+AuthPage ..> AuthRoutes : consome /api/login
+DashboardPage ..> EntregasRoutes : consome /api/dashboard e /api/entregas
+
+note right of Produto
+  Estoque minimo agora e persistido
+  no banco via campo estoque_minimo.
+end note
+
+note bottom of PedidosService
+  Responsavel pela leitura dos pedidos,
+  consolidacao dos itens e sincronizacao
+  do estoque nas operacoes de pedido.
+end note
+
+@enduml

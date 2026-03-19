@@ -1,0 +1,27 @@
+@startuml
+title Rota Klara - Casos de Uso do Entregador
+
+left to right direction
+skinparam shadowing false
+
+actor Entregador
+
+rectangle "Autenticacao" {
+  usecase "Realizar login" as UC_Login
+}
+
+rectangle "Entregas" {
+  usecase "Consultar entregas pendentes" as UC_EntregasPendentes
+  usecase "Atualizar status da entrega" as UC_StatusEntrega
+  usecase "Atualizar localizacao" as UC_Localizacao
+  usecase "Repor estoque ao cancelar" as UC_ReporEstoque
+}
+
+Entregador --> UC_Login
+Entregador --> UC_EntregasPendentes
+Entregador --> UC_StatusEntrega
+Entregador --> UC_Localizacao
+
+UC_StatusEntrega .> UC_ReporEstoque : <<extend>>
+
+@enduml

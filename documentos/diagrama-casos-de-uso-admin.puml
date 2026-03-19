@@ -1,0 +1,65 @@
+@startuml
+title Rota Klara - Casos de Uso do Administrador
+
+left to right direction
+skinparam shadowing false
+
+actor Administrador
+
+rectangle "Autenticacao" {
+  usecase "Realizar login" as UC_Login
+}
+
+rectangle "Dashboard" {
+  usecase "Visualizar dashboard" as UC_Dashboard
+}
+
+rectangle "Clientes" {
+  usecase "Listar clientes" as UC_ListarClientes
+  usecase "Cadastrar cliente" as UC_CadastrarCliente
+  usecase "Editar cliente" as UC_EditarCliente
+  usecase "Excluir cliente" as UC_ExcluirCliente
+}
+
+rectangle "Pedidos" {
+  usecase "Listar pedidos" as UC_ListarPedidos
+  usecase "Criar pedido" as UC_CriarPedido
+  usecase "Editar pedido" as UC_EditarPedido
+  usecase "Excluir pedido" as UC_ExcluirPedido
+  usecase "Validar estoque do pedido" as UC_ValidarEstoque
+  usecase "Baixar estoque" as UC_BaixarEstoque
+  usecase "Repor estoque" as UC_ReporEstoque
+}
+
+rectangle "Produtos e Estoque" {
+  usecase "Listar produtos" as UC_ListarProdutos
+  usecase "Cadastrar produto" as UC_CadastrarProduto
+  usecase "Editar produto" as UC_EditarProduto
+  usecase "Excluir produto" as UC_ExcluirProduto
+  usecase "Definir estoque minimo" as UC_EstoqueMinimo
+}
+
+Administrador --> UC_Login
+Administrador --> UC_Dashboard
+Administrador --> UC_ListarClientes
+Administrador --> UC_CadastrarCliente
+Administrador --> UC_EditarCliente
+Administrador --> UC_ExcluirCliente
+Administrador --> UC_ListarPedidos
+Administrador --> UC_CriarPedido
+Administrador --> UC_EditarPedido
+Administrador --> UC_ExcluirPedido
+Administrador --> UC_ListarProdutos
+Administrador --> UC_CadastrarProduto
+Administrador --> UC_EditarProduto
+Administrador --> UC_ExcluirProduto
+Administrador --> UC_EstoqueMinimo
+
+UC_CriarPedido .> UC_ValidarEstoque : <<include>>
+UC_CriarPedido .> UC_BaixarEstoque : <<include>>
+UC_EditarPedido .> UC_ValidarEstoque : <<include>>
+UC_EditarPedido .> UC_BaixarEstoque : <<include>>
+UC_EditarPedido .> UC_ReporEstoque : <<include>>
+UC_ExcluirPedido .> UC_ReporEstoque : <<include>>
+
+@enduml

@@ -1,0 +1,94 @@
+@startuml
+title Rota Klara - Modelo Entidade-Relacionamento
+
+hide methods
+hide stereotypes
+skinparam shadowing false
+skinparam linetype ortho
+
+entity "usuarios" as usuarios {
+  * id : INT <<PK>>
+  --
+  usuario : VARCHAR(80) <<UK>>
+  nome : VARCHAR(120)
+  senha : VARCHAR(255)
+  role : ENUM
+  created_at : TIMESTAMP
+}
+
+entity "clientes" as clientes {
+  * id : INT <<PK>>
+  --
+  usuario_id : INT <<FK, UK>>
+  cpf : VARCHAR(14) <<UK>>
+  nome : VARCHAR(120)
+  endereco : VARCHAR(255)
+  latitude : DECIMAL(10,7)
+  longitude : DECIMAL(10,7)
+  email : VARCHAR(120)
+  created_at : TIMESTAMP
+}
+
+entity "produtos" as produtos {
+  * id : INT <<PK>>
+  --
+  nome : VARCHAR(120)
+  descricao : TEXT
+  valor : DECIMAL(10,2)
+  estoque : INT
+  estoque_minimo : INT
+  data : DATE
+  created_at : TIMESTAMP
+}
+
+entity "pedidos" as pedidos {
+  * id : INT <<PK>>
+  --
+  cliente_id : INT <<FK>>
+  usuario_id : INT <<FK>>
+  entregador_id : INT <<FK>>
+  data_pedido : DATE
+  hora_pedido : TIME
+  data_entrega : DATE
+  status : ENUM
+  observacoes : TEXT
+  created_at : TIMESTAMP
+}
+
+entity "pedido_itens" as pedido_itens {
+  * id : INT <<PK>>
+  --
+  pedido_id : INT <<FK>>
+  produto_id : INT <<FK>>
+  quantidade : INT
+  valor_unitario : DECIMAL(10,2)
+  created_at : TIMESTAMP
+}
+
+entity "entregador_localizacao" as entregador_localizacao {
+  * entregador_id : INT <<PK, FK>>
+  --
+  latitude : DECIMAL(10,7)
+  longitude : DECIMAL(10,7)
+  atualizado_em : DATETIME
+}
+
+usuarios ||--o| clientes : "usuario_id"
+usuarios ||--o{ pedidos : "usuario_id"
+usuarios ||--o{ pedidos : "entregador_id"
+usuarios ||--o| entregador_localizacao : "entregador_id"
+clientes ||--o{ pedidos : "cliente_id"
+pedidos ||--|{ pedido_itens : "pedido_id"
+produtos ||--o{ pedido_itens : "produto_id"
+
+note right of produtos
+  estoque_minimo define o limite
+  de alerta de reposicao por produto.
+end note
+
+note bottom of pedidos
+  O status influencia a movimentacao
+  do estoque nas regras de negocio.
+end note
+
+@enduml

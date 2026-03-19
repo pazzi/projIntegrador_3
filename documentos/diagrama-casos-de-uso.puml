@@ -1,0 +1,85 @@
+@startuml
+title Rota Klara - Diagrama de Casos de Uso
+
+left to right direction
+skinparam shadowing false
+
+actor Administrador
+actor Cliente
+actor Entregador
+
+rectangle "Sistema Rota Klara" {
+  usecase "Realizar login" as UC_Login
+  usecase "Cadastrar cliente" as UC_CadastroCliente
+
+  usecase "Visualizar dashboard" as UC_Dashboard
+  usecase "Gerenciar clientes" as UC_Clientes
+  usecase "Gerenciar pedidos" as UC_Pedidos
+  usecase "Gerenciar produtos" as UC_Produtos
+  usecase "Gerenciar estoque" as UC_Estoque
+
+  usecase "Criar pedido administrativo" as UC_CriarPedidoAdmin
+  usecase "Editar pedido" as UC_EditarPedido
+  usecase "Excluir pedido" as UC_ExcluirPedido
+
+  usecase "Consultar perfil" as UC_PerfilCliente
+  usecase "Criar pedido do cliente" as UC_PedidoCliente
+  usecase "Consultar meus pedidos" as UC_MeusPedidos
+  usecase "Consultar produtos" as UC_ConsultarProdutos
+
+  usecase "Consultar entregas pendentes" as UC_EntregasPendentes
+  usecase "Atualizar status da entrega" as UC_StatusEntrega
+  usecase "Atualizar localizacao" as UC_Localizacao
+
+  usecase "Baixar estoque" as UC_BaixarEstoque
+  usecase "Repor estoque" as UC_ReporEstoque
+  usecase "Validar estoque disponivel" as UC_ValidarEstoque
+}
+
+Administrador --> UC_Login
+Administrador --> UC_Dashboard
+Administrador --> UC_Clientes
+Administrador --> UC_Pedidos
+Administrador --> UC_Produtos
+Administrador --> UC_Estoque
+Administrador --> UC_CriarPedidoAdmin
+Administrador --> UC_EditarPedido
+Administrador --> UC_ExcluirPedido
+
+Cliente --> UC_Login
+Cliente --> UC_CadastroCliente
+Cliente --> UC_PerfilCliente
+Cliente --> UC_PedidoCliente
+Cliente --> UC_MeusPedidos
+Cliente --> UC_ConsultarProdutos
+
+Entregador --> UC_Login
+Entregador --> UC_EntregasPendentes
+Entregador --> UC_StatusEntrega
+Entregador --> UC_Localizacao
+
+UC_Pedidos .> UC_CriarPedidoAdmin : <<include>>
+UC_Pedidos .> UC_EditarPedido : <<include>>
+UC_Pedidos .> UC_ExcluirPedido : <<include>>
+
+UC_Produtos .> UC_Estoque : <<include>>
+UC_CriarPedidoAdmin .> UC_ValidarEstoque : <<include>>
+UC_PedidoCliente .> UC_ValidarEstoque : <<include>>
+UC_StatusEntrega .> UC_ReporEstoque : <<extend>>
+UC_ExcluirPedido .> UC_ReporEstoque : <<include>>
+UC_EditarPedido .> UC_BaixarEstoque : <<include>>
+UC_EditarPedido .> UC_ReporEstoque : <<include>>
+UC_CriarPedidoAdmin .> UC_BaixarEstoque : <<include>>
+UC_PedidoCliente .> UC_BaixarEstoque : <<include>>
+
+note right of UC_Estoque
+  Estoque minimo e configurado
+  por produto no banco de dados.
+end note
+
+note bottom of UC_StatusEntrega
+  Cancelamento de pedido ou mudanca
+  para status cancelado repoe estoque.
+end note
+
+@enduml

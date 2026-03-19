@@ -1,0 +1,88 @@
+@startuml
+title Rota Klara - Diagrama de Dominio e Banco
+
+skinparam classAttributeIconSize 0
+skinparam shadowing false
+skinparam linetype ortho
+
+class Usuario {
+  +id: int
+  +usuario: varchar(80)
+  +nome: varchar(120)
+  +senha: varchar(255)
+  +role: enum(admin, entregador, outros)
+  +created_at: timestamp
+}
+
+class Cliente {
+  +id: int
+  +usuario_id: int
+  +cpf: varchar(14)
+  +nome: varchar(120)
+  +endereco: varchar(255)
+  +latitude: decimal(10,7)
+  +longitude: decimal(10,7)
+  +email: varchar(120)
+  +created_at: timestamp
+}
+
+class Produto {
+  +id: int
+  +nome: varchar(120)
+  +descricao: text
+  +valor: decimal(10,2)
+  +estoque: int
+  +estoque_minimo: int
+  +data: date
+  +created_at: timestamp
+}
+
+class Pedido {
+  +id: int
+  +cliente_id: int
+  +usuario_id: int
+  +entregador_id: int
+  +data_pedido: date
+  +hora_pedido: time
+  +data_entrega: date
+  +status: enum(pendente, em-rota, entregue, ausente, cancelado)
+  +observacoes: text
+  +created_at: timestamp
+}
+
+class PedidoItem {
+  +id: int
+  +pedido_id: int
+  +produto_id: int
+  +quantidade: int
+  +valor_unitario: decimal(10,2)
+  +created_at: timestamp
+}
+
+class EntregadorLocalizacao {
+  +entregador_id: int
+  +latitude: decimal(10,7)
+  +longitude: decimal(10,7)
+  +atualizado_em: datetime
+}
+
+Usuario "1" -- "0..1" Cliente : vincula
+Usuario "1" -- "0..*" Pedido : cria
+Usuario "1" -- "0..*" Pedido : entrega
+Usuario "1" -- "0..1" EntregadorLocalizacao : possui
+Cliente "1" -- "0..*" Pedido : realiza
+Pedido "1" *-- "1..*" PedidoItem : contem
+Produto "1" -- "0..*" PedidoItem : compoe
+
+note right of Produto
+  estoque e estoque_minimo controlam
+  disponibilidade e alerta de reposicao.
+end note
+
+note bottom of Pedido
+  status cancelado devolve estoque.
+  status diferente de cancelado
+  reserva ou mantem itens baixados.
+end note
+
+@enduml

@@ -1,0 +1,37 @@
+@startuml
+title Rota Klara - Casos de Uso do Cliente
+
+left to right direction
+skinparam shadowing false
+
+actor Cliente
+
+rectangle "Autenticacao e Perfil" {
+  usecase "Realizar login" as UC_Login
+  usecase "Cadastrar conta" as UC_Cadastro
+  usecase "Consultar perfil" as UC_Perfil
+}
+
+rectangle "Produtos" {
+  usecase "Consultar produtos" as UC_Produtos
+  usecase "Validar estoque disponivel" as UC_ValidarEstoque
+}
+
+rectangle "Pedidos" {
+  usecase "Criar pedido" as UC_CriarPedido
+  usecase "Consultar meus pedidos" as UC_MeusPedidos
+  usecase "Baixar estoque" as UC_BaixarEstoque
+}
+
+Cliente --> UC_Login
+Cliente --> UC_Cadastro
+Cliente --> UC_Perfil
+Cliente --> UC_Produtos
+Cliente --> UC_CriarPedido
+Cliente --> UC_MeusPedidos
+
+UC_CriarPedido .> UC_Produtos : <<include>>
+UC_CriarPedido .> UC_ValidarEstoque : <<include>>
+UC_CriarPedido .> UC_BaixarEstoque : <<include>>
+
+@enduml
