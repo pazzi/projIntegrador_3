@@ -5,6 +5,87 @@ const { tokens, gerarToken } = require('../middlewares/auth');
 
 const router = express.Router();
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     LoginRequest:
+ *       type: object
+ *       required:
+ *         - usuario
+ *         - senha
+ *       properties:
+ *         usuario:
+ *           type: string
+ *           description: Nome de usuário
+ *         senha:
+ *           type: string
+ *           description: Senha do usuário
+ *     LoginResponse:
+ *       type: object
+ *       properties:
+ *         sucesso:
+ *           type: boolean
+ *         usuario:
+ *           type: string
+ *         nome:
+ *           type: string
+ *         tipo:
+ *           type: string
+ *           enum: [admin, outros]
+ *         token:
+ *           type: string
+ *     CadastroRequest:
+ *       type: object
+ *       required:
+ *         - usuario
+ *         - senha
+ *         - nome
+ *         - cpf
+ *         - endereco
+ *       properties:
+ *         usuario:
+ *           type: string
+ *         senha:
+ *           type: string
+ *         nome:
+ *           type: string
+ *         cpf:
+ *           type: string
+ *         email:
+ *           type: string
+ *         endereco:
+ *           type: string
+ *         latitude:
+ *           type: number
+ *         longitude:
+ *           type: number
+ */
+
+/**
+ * @swagger
+ * /api/login:
+ *   post:
+ *     summary: Autenticação de usuário
+ *     tags: [Autenticação]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/LoginRequest'
+ *     responses:
+ *       200:
+ *         description: Login realizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/LoginResponse'
+ *       400:
+ *         description: Dados inválidos
+ *       401:
+ *         description: Usuário ou senha inválidos
+ */
 router.post('/login', async (req, res) => {
   try {
     const { usuario, senha } = req.body;
@@ -74,6 +155,28 @@ router.post('/login', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/clientes/cadastro:
+ *   post:
+ *     summary: Cadastro de novo cliente
+ *     tags: [Autenticação]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/CadastroRequest'
+ *     responses:
+ *       201:
+ *         description: Cliente cadastrado com sucesso
+ *       400:
+ *         description: Dados obrigatórios não informados
+ *       409:
+ *         description: Usuário ou CPF já cadastrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
 router.post('/clientes/cadastro', async (req, res) => {
   const pool = getPool();
   const connection = await pool.getConnection();

@@ -8,6 +8,87 @@ const router = express.Router();
 // Aplicar middleware de autenticação a todas as rotas
 router.use(authMiddleware);
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     DashboardIndicadores:
+ *       type: object
+ *       properties:
+ *         totalEntregas:
+ *           type: integer
+ *         concluidas:
+ *           type: integer
+ *         pendentes:
+ *           type: integer
+ *         totalClientes:
+ *           type: integer
+ *     Entrega:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         cliente:
+ *           type: string
+ *         endereco:
+ *           type: string
+ *         produto:
+ *           type: string
+ *         quantidade:
+ *           type: integer
+ *         status:
+ *           type: string
+ *           enum: [pendente, em-rota, entregue, ausente, cancelado]
+ *         latitude:
+ *           type: number
+ *         longitude:
+ *           type: number
+ *         observacao:
+ *           type: string
+ *     PontoEntrega:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         cliente:
+ *           type: string
+ *         status:
+ *           type: string
+ *         latitude:
+ *           type: number
+ *         longitude:
+ *           type: number
+ *         endereco:
+ *           type: string
+ *     LocalizacaoEntregador:
+ *       type: object
+ *       properties:
+ *         latitude:
+ *           type: number
+ *         longitude:
+ *           type: number
+ *         timestamp:
+ *           type: string
+ */
+
+/**
+ * @swagger
+ * /api/dashboard/indicadores:
+ *   get:
+ *     summary: Obtém os indicadores do dashboard
+ *     tags: [Dashboard]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Indicadores do dashboard
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/DashboardIndicadores'
+ *       500:
+ *         description: Erro interno do servidor
+ */
 router.get('/dashboard/indicadores', async (_req, res) => {
   try {
     const pool = getPool();
@@ -38,6 +119,26 @@ router.get('/dashboard/indicadores', async (_req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/entregas/hoje:
+ *   get:
+ *     summary: Lista as entregas do dia
+ *     tags: [Entregas]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de entregas do dia
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Entrega'
+ *       500:
+ *         description: Erro interno do servidor
+ */
 router.get('/entregas/hoje', async (req, res) => {
   try {
     const entregas = await listarEntregas({
@@ -148,6 +249,43 @@ router.get('/entregas/pendentes', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/entregas/{id}/status:
+ *   put:
+ *     summary: Atualiza o status de uma entrega
+ *     tags: [Entregas]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID da entrega
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - status
+ *             properties:
+ *               status:
+ *                 type: string
+ *                 enum: [pendente, em-rota, entregue, ausente, cancelado]
+ *     responses:
+ *       200:
+ *         description: Status atualizado com sucesso
+ *       400:
+ *         description: Status inválido
+ *       404:
+ *         description: Entrega não encontrada
+ *       500:
+ *         description: Erro interno do servidor
+ */
 router.put('/entregas/:id/status', async (req, res) => {
   try {
     const id = Number(req.params.id);

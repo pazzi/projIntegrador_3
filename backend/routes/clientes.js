@@ -7,6 +7,90 @@ const router = express.Router();
 // Aplicar middleware de autenticação a todas as rotas
 router.use(authMiddleware);
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Cliente:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         cpf:
+ *           type: string
+ *         nome:
+ *           type: string
+ *         endereco:
+ *           type: string
+ *         latitude:
+ *           type: number
+ *         longitude:
+ *           type: number
+ *         email:
+ *           type: string
+ *     ClienteInput:
+ *       type: object
+ *       required:
+ *         - cpf
+ *         - nome
+ *         - endereco
+ *       properties:
+ *         cpf:
+ *           type: string
+ *         nome:
+ *           type: string
+ *         endereco:
+ *           type: string
+ *         latitude:
+ *           type: number
+ *         longitude:
+ *           type: number
+ *         email:
+ *           type: string
+ */
+
+/**
+ * @swagger
+ * /api/clientes:
+ *   get:
+ *     summary: Lista todos os clientes
+ *     tags: [Clientes]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de clientes
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Cliente'
+ *       500:
+ *         description: Erro interno do servidor
+ *   post:
+ *     summary: Cria um novo cliente
+ *     tags: [Clientes]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ClienteInput'
+ *     responses:
+ *       201:
+ *         description: Cliente criado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Cliente'
+ *       400:
+ *         description: Dados inválidos
+ *       500:
+ *         description: Erro interno do servidor
+ */
 router.get('/clientes', async (_req, res) => {
   try {
     const pool = getPool();
@@ -77,6 +161,60 @@ router.post('/clientes', async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/clientes/{id}:
+ *   put:
+ *     summary: Atualiza um cliente existente
+ *     tags: [Clientes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do cliente
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/ClienteInput'
+ *     responses:
+ *       200:
+ *         description: Cliente atualizado com sucesso
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Cliente'
+ *       400:
+ *         description: Dados inválidos
+ *       404:
+ *         description: Cliente não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ *   delete:
+ *     summary: Remove um cliente
+ *     tags: [Clientes]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: integer
+ *         description: ID do cliente
+ *     responses:
+ *       200:
+ *         description: Cliente removido com sucesso
+ *       404:
+ *         description: Cliente não encontrado
+ *       500:
+ *         description: Erro interno do servidor
+ */
 router.put('/clientes/:id', async (req, res) => {
   try {
     const { cpf, nome, endereco, latitude, email, longitude } = req.body;

@@ -7,6 +7,46 @@ const router = express.Router();
 // Aplicar middleware de autenticação a todas as rotas
 router.use(authMiddleware);
 
+/**
+ * @swagger
+ * components:
+ *   schemas:
+ *     Produto:
+ *       type: object
+ *       properties:
+ *         id:
+ *           type: integer
+ *         nome:
+ *           type: string
+ *         descricao:
+ *           type: string
+ *         valor:
+ *           type: number
+ *         data:
+ *           type: string
+ *           format: date
+ */
+
+/**
+ * @swagger
+ * /api/produtos:
+ *   get:
+ *     summary: Lista todos os produtos
+ *     tags: [Produtos]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Lista de produtos
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 $ref: '#/components/schemas/Produto'
+ *       500:
+ *         description: Erro interno do servidor
+ */
 router.get('/produtos', async (_req, res) => {
   try {
     const pool = getPool();
