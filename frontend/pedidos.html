@@ -1,0 +1,502 @@
+<!-- pedidos.html -->
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rota Klara - Gerenciar Pedidos</title>
+    <link rel="stylesheet" href="css/estilo.css" />
+    <!-- CSS do Leaflet para mapas (caso queira visualizar endereços) -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+    <style>
+      /* Estilos adicionais específicos para a página de pedidos */
+      .filtros-pedidos {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        align-items: flex-end;
+      }
+
+      .filtro-grupo {
+        flex: 1;
+        min-width: 200px;
+      }
+
+      .filtro-grupo label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: bold;
+        font-size: 0.9em;
+      }
+
+      .filtro-grupo input,
+      .filtro-grupo select {
+        width: 100%;
+        padding: 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+      }
+
+      .botoes-filtro {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .badge-status {
+        display: inline-block;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.85em;
+        font-weight: bold;
+        text-align: center;
+      }
+
+      .status-pendente {
+        background-color: #ffc107;
+        color: #333;
+      }
+
+      .status-em-rota {
+        background-color: #17a2b8;
+        color: white;
+      }
+
+      .status-entregue {
+        background-color: #28a745;
+        color: white;
+      }
+
+      .status-cancelado {
+        background-color: #dc3545;
+        color: white;
+      }
+
+      .status-ausente {
+        background-color: #fd7e14;
+        color: white;
+      }
+
+      .acoes-pedido {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .botao-pequeno {
+        padding: 5px 10px;
+        font-size: 0.85em;
+      }
+
+      .modal-form {
+        max-width: 600px;
+      }
+
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+      }
+
+      .grid-3 {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 15px;
+      }
+
+      .produto-item {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        margin-bottom: 10px;
+        padding: 10px;
+        background-color: #f8f9fa;
+        border-radius: 5px;
+      }
+
+      .produto-item select {
+        flex: 2;
+      }
+
+      .produto-item input {
+        flex: 1;
+      }
+
+      .btn-remover {
+        background-color: #dc3545;
+        color: white;
+        border: none;
+        border-radius: 50%;
+        width: 30px;
+        height: 30px;
+        font-size: 1.2em;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .btn-remover:hover {
+        background-color: #c82333;
+      }
+
+      .btn-adicionar-produto {
+        margin-top: 10px;
+        background-color: #28a745;
+      }
+
+      .resumo-pedido {
+        margin-top: 20px;
+        padding: 15px;
+        background-color: #e9ecef;
+        border-radius: 5px;
+        font-weight: bold;
+        text-align: right;
+      }
+
+      /* Alto contraste */
+      body.alto-contraste .filtros-pedidos {
+        background-color: black;
+        border: 2px solid yellow;
+      }
+
+      body.alto-contraste .produto-item {
+        background-color: black;
+        border: 1px solid yellow;
+      }
+
+      body.alto-contraste .badge-status {
+        background-color: yellow !important;
+        color: black !important;
+        border: 1px solid yellow;
+      }
+
+      /* Responsividade */
+      @media (max-width: 768px) {
+        .grid-2,
+        .grid-3 {
+          grid-template-columns: 1fr;
+        }
+
+        .filtros-pedidos {
+          flex-direction: column;
+        }
+
+        .botoes-filtro {
+          width: 100%;
+        }
+
+        .botoes-filtro button {
+          flex: 1;
+        }
+
+        .acoes-pedido {
+          flex-direction: column;
+        }
+
+        .botao-pequeno {
+          width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-dashboard">
+      <!-- Cabeçalho -->
+      <header
+        style="
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 20px;
+        "
+      >
+        <div>
+          <h1>Rota Klara</h1>
+          <h2 style="margin-top: 0">Gerenciamento de Pedidos</h2>
+        </div>
+        <div class="usuario-info">
+          <span id="nome-usuario"></span>
+          <button id="btn-logout" class="botao-perigo">Sair</button>
+        </div>
+      </header>
+
+      <!-- Menu de navegação -->
+      <nav
+        style="display: flex; gap: 10px; margin-bottom: 30px; flex-wrap: wrap"
+      >
+        <button class="botao" onclick="window.location.href = 'index.html'">
+          🏠 Dashboard
+        </button>
+        <button class="botao" onclick="window.location.href = 'clientes.html'">
+          👥 Clientes
+        </button>
+        <button
+          class="botao"
+          style="background-color: #004c99"
+          onclick="window.location.href = 'pedidos.html'"
+        >
+          📦 Pedidos
+        </button>
+      </nav>
+
+      <!-- Área para mensagens -->
+      <div id="mensagem" class="mensagem"></div>
+
+      <!-- Botão para novo pedido -->
+      <div
+        style="
+          margin-bottom: 20px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+        "
+      >
+        <h3 style="margin: 0">Lista de Pedidos</h3>
+        <button id="btn-novo-pedido" class="botao botao-sucesso">
+          ➕ Novo Pedido
+        </button>
+      </div>
+
+      <!-- Filtros -->
+      <div class="filtros-pedidos">
+        <div class="filtro-grupo">
+          <label for="filtro-status">Status:</label>
+          <select id="filtro-status">
+            <option value="">Todos</option>
+            <option value="pendente">Pendente</option>
+            <option value="em-rota">Em Rota</option>
+            <option value="entregue">Entregue</option>
+            <option value="ausente">Cliente Ausente</option>
+            <option value="cancelado">Cancelado</option>
+          </select>
+        </div>
+
+        <div class="filtro-grupo">
+          <label for="filtro-cliente">Cliente:</label>
+          <input
+            type="text"
+            id="filtro-cliente"
+            placeholder="Buscar por cliente..."
+          />
+        </div>
+
+        <div class="filtro-grupo">
+          <label for="filtro-data">Data:</label>
+          <input type="date" id="filtro-data" />
+        </div>
+
+        <div class="botoes-filtro">
+          <button id="btn-aplicar-filtros" class="botao">
+            🔍 Aplicar Filtros
+          </button>
+          <button id="btn-limpar-filtros" class="botao-perigo">
+            🧹 Limpar
+          </button>
+        </div>
+      </div>
+
+      <!-- Tabela de pedidos -->
+      <div style="overflow-x: auto">
+        <table id="tabela-pedidos">
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Data</th>
+              <th>Cliente</th>
+              <th>Endereço</th>
+              <th>Produtos</th>
+              <th>Valor Total</th>
+              <th>Status</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="corpo-tabela-pedidos">
+            <tr>
+              <td colspan="8" style="text-align: center; padding: 30px">
+                Carregando pedidos...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- MODAL: NOVO PEDIDO / EDITAR PEDIDO -->
+    <div id="modal-pedido" class="modal">
+      <div class="modal-conteudo modal-form">
+        <h3 id="titulo-modal">Novo Pedido</h3>
+
+        <form id="form-pedido">
+          <!-- Campo oculto para ID (quando editar) -->
+          <input type="hidden" id="pedido-id" />
+
+          <!-- Seleção de Cliente -->
+          <div class="campo">
+            <label for="cliente-id">Cliente *</label>
+            <select id="cliente-id" required>
+              <option value="">Selecione um cliente...</option>
+              <!-- Opções serão carregadas via JavaScript -->
+            </select>
+          </div>
+
+          <!-- Produtos (múltiplos) -->
+          <div class="campo">
+            <label>Produtos *</label>
+            <div id="produtos-container">
+              <!-- Primeiro produto (já vem pré-carregado) -->
+              <div class="produto-item" id="produto-0">
+                <select class="produto-select" required>
+                  <option value="">Selecione...</option>
+                  <!-- Opções serão carregadas via JavaScript -->
+                </select>
+                <input
+                  type="number"
+                  class="produto-quantidade"
+                  placeholder="Qtd"
+                  min="1"
+                  value="1"
+                  required
+                />
+                <button
+                  type="button"
+                  class="btn-remover"
+                  onclick="removerProduto(0)"
+                  style="display: none"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              id="btn-adicionar-produto"
+              class="botao btn-adicionar-produto botao-pequeno"
+            >
+              ➕ Adicionar Produto
+            </button>
+          </div>
+
+          <!-- Data do Pedido -->
+          <div class="grid-2">
+            <div class="campo">
+              <label for="data-pedido">Data do Pedido *</label>
+              <input type="date" id="data-pedido" required />
+            </div>
+
+            <div class="campo">
+              <label for="hora-pedido">Hora</label>
+              <input type="time" id="hora-pedido" />
+            </div>
+          </div>
+
+          <!-- Observações -->
+          <div class="campo">
+            <label for="observacoes">Observações</label>
+            <textarea
+              id="observacoes"
+              rows="3"
+              placeholder="Instruções para entrega, ponto de referência, etc..."
+            ></textarea>
+          </div>
+
+          <!-- Status (se for edição) -->
+          <div class="campo" id="campo-status" style="display: none">
+            <label for="status-pedido">Status</label>
+            <select id="status-pedido">
+              <option value="pendente">Pendente</option>
+              <option value="em-rota">Em Rota</option>
+              <option value="entregue">Entregue</option>
+              <option value="ausente">Cliente Ausente</option>
+              <option value="cancelado">Cancelado</option>
+            </select>
+          </div>
+
+          <!-- Resumo -->
+          <div class="resumo-pedido" id="resumo-pedido">Total: R$ 0,00</div>
+
+          <!-- Botões -->
+          <div
+            style="
+              display: flex;
+              gap: 10px;
+              justify-content: flex-end;
+              margin-top: 20px;
+            "
+          >
+            <button type="button" id="btn-cancelar-modal" class="botao-perigo">
+              Cancelar
+            </button>
+            <button type="submit" id="btn-salvar-pedido" class="botao-sucesso">
+              Salvar Pedido
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- MODAL: VER DETALHES DO PEDIDO -->
+    <div id="modal-detalhes" class="modal">
+      <div class="modal-conteudo">
+        <h3>Detalhes do Pedido</h3>
+
+        <div id="detalhes-conteudo">
+          <!-- Conteúdo preenchido via JavaScript -->
+        </div>
+
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+            margin-top: 20px;
+          "
+        >
+          <button id="btn-fechar-detalhes" class="botao">Fechar</button>
+          <button id="btn-editar-do-detalhe" class="botao-sucesso">
+            Editar
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL: CONFIRMAR EXCLUSÃO -->
+    <div id="modal-excluir" class="modal">
+      <div class="modal-conteudo">
+        <h3>Confirmar Exclusão</h3>
+
+        <p id="mensagem-excluir">Tem certeza que deseja excluir este pedido?</p>
+
+        <div
+          style="
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+          "
+        >
+          <button id="btn-cancelar-excluir" class="botao">Cancelar</button>
+          <button id="btn-confirmar-excluir" class="botao-perigo">
+            Excluir
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/mapas.js"></script>
+    <script src="js/pedidos.js"></script>
+  </body>
+</html>

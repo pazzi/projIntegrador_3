@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rota Klara - Clientes</title>
+    <link rel="stylesheet" href="css/estilo.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+  </head>
+  <body>
+    <div class="container-dashboard">
+      <header class="topo-pagina">
+        <div>
+          <h1>Clientes</h1>
+          <p class="subtitulo-pagina">Cadastro e consulta da base de atendimento</p>
+        </div>
+        <div class="usuario-info">
+          <span id="nome-usuario"></span>
+          <button id="btn-logout" class="botao-perigo">Sair</button>
+        </div>
+      </header>
+
+      <nav class="barra-navegacao">
+        <button class="botao" onclick="window.location.href='index.html'">🏠 Dashboard</button>
+        <button class="botao ativo" onclick="window.location.href='clientes.html'">👥 Clientes</button>
+        <button class="botao" onclick="window.location.href='pedidos.html'">📦 Pedidos</button>
+      </nav>
+
+      <div id="mensagem" class="mensagem"></div>
+
+      <section class="card-container">
+        <article class="card">
+          <h3>Total de Clientes</h3>
+          <div class="numero" id="total-clientes">0</div>
+        </article>
+        <article class="card">
+          <h3>Com Coordenadas</h3>
+          <div class="numero" id="clientes-geolocalizados">0</div>
+        </article>
+        <article class="card">
+          <h3>Com E-mail</h3>
+          <div class="numero" id="clientes-email">0</div>
+        </article>
+      </section>
+
+      <section class="painel">
+        <div class="painel-topo">
+          <h2>Busca e filtros</h2>
+          <button id="btn-novo-cliente" class="botao-sucesso">➕ Novo cliente</button>
+        </div>
+
+        <div class="grid-filtros">
+          <div class="campo">
+            <label for="filtro-busca">Buscar por nome, CPF ou e-mail</label>
+            <input id="filtro-busca" type="text" placeholder="Digite para filtrar" />
+          </div>
+          <div class="campo">
+            <label for="filtro-coordenadas">Localização</label>
+            <select id="filtro-coordenadas">
+              <option value="">Todos</option>
+              <option value="com">Com coordenadas</option>
+              <option value="sem">Sem coordenadas</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="acoes-linha">
+          <button id="btn-aplicar-filtros" class="botao">🔍 Aplicar filtros</button>
+          <button id="btn-limpar-filtros" class="botao">🧹 Limpar</button>
+        </div>
+      </section>
+
+      <section class="painel">
+        <div class="painel-topo">
+          <h2>Lista de clientes</h2>
+          <span id="contador-lista" class="contador-lista">0 registros</span>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>Nome</th>
+              <th>CPF</th>
+              <th>E-mail</th>
+              <th>Endereço</th>
+              <th>Coordenadas</th>
+              <th>Ações</th>
+            </tr>
+          </thead>
+          <tbody id="corpo-tabela-clientes"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <div id="modal-cliente" class="modal">
+      <div class="modal-conteudo modal-largo">
+        <h3 id="titulo-modal-cliente">Novo cliente</h3>
+        <form id="form-cliente">
+          <input id="cliente-id" type="hidden" />
+
+          <div class="grid-formulario">
+            <div class="campo">
+              <label for="cliente-nome">Nome</label>
+              <input id="cliente-nome" type="text" required />
+            </div>
+            <div class="campo">
+              <label for="cliente-cpf">CPF</label>
+              <input id="cliente-cpf" type="text" required />
+            </div>
+            <div class="campo campo-amplo">
+              <label for="cliente-email">E-mail</label>
+              <input id="cliente-email" type="email" />
+            </div>
+            <div class="campo campo-amplo">
+              <label for="cliente-endereco">Endereço</label>
+              <input id="cliente-endereco" type="text" required />
+            </div>
+            <div class="campo">
+              <label for="cliente-cep">CEP</label>
+              <input id="cliente-cep" type="text" placeholder="Opcional para localizar melhor" />
+            </div>
+            <div class="campo">
+              <label for="cliente-cidade">Cidade</label>
+              <input id="cliente-cidade" type="text" value="Capivari" />
+            </div>
+            <div class="campo">
+              <label for="cliente-uf">UF</label>
+              <input id="cliente-uf" type="text" value="SP" maxlength="2" />
+            </div>
+            <div class="campo">
+              <label for="cliente-latitude">Latitude</label>
+              <input id="cliente-latitude" type="number" step="0.0000001" />
+            </div>
+            <div class="campo">
+              <label for="cliente-longitude">Longitude</label>
+              <input id="cliente-longitude" type="number" step="0.0000001" />
+            </div>
+            <div class="campo campo-amplo">
+              <div class="acoes-linha">
+                <button type="button" id="btn-buscar-coordenadas" class="botao">Buscar coordenadas no mapa</button>
+              </div>
+              <p id="status-geocodificacao" class="texto-apoio">Use endereço, cidade e CEP para melhorar a localização.</p>
+            </div>
+            <div class="campo campo-amplo">
+              <div id="mapa-cliente"></div>
+            </div>
+          </div>
+
+          <div class="acoes-linha">
+            <button type="submit" class="botao-sucesso">Salvar</button>
+            <button type="button" id="btn-cancelar-modal" class="botao-perigo">Cancelar</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <div id="modal-excluir" class="modal">
+      <div class="modal-conteudo">
+        <h3>Excluir cliente</h3>
+        <p id="mensagem-excluir"></p>
+        <div class="acoes-linha">
+          <button id="btn-confirmar-excluir" class="botao-perigo">Excluir</button>
+          <button id="btn-cancelar-excluir" class="botao">Cancelar</button>
+        </div>
+      </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/mapas.js"></script>
+    <script src="js/clientes.js"></script>
+  </body>
+</html>

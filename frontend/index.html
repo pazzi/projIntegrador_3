@@ -1,0 +1,94 @@
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rota Klara - Dashboard</title>
+    <link rel="stylesheet" href="css/estilo.css" />
+    <!-- CSS do Leaflet para mapas -->
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+  </head>
+  <body>
+    <div class="container-dashboard">
+      <!-- Cabeçalho -->
+      <header class="topo-pagina">
+        <h1>Rota Klara</h1>
+        <div class="usuario-info">
+          <span id="nome-usuario"></span>
+          <button id="btn-logout" class="botao-perigo">Sair</button>
+        </div>
+      </header>
+
+      <!-- Menu de navegação -->
+      <nav class="barra-navegacao">
+        <button class="botao ativo" onclick="window.location.href = 'index.html'">
+          🏠 Dashboard
+        </button>
+        <button class="botao" onclick="window.location.href = 'clientes.html'">
+          👥 Clientes
+        </button>
+        <button class="botao" onclick="window.location.href = 'pedidos.html'">
+          📦 Pedidos
+        </button>
+      </nav>
+
+      <!-- Área para mensagens -->
+      <div id="mensagem" class="mensagem"></div>
+
+      <!-- Cards com indicadores -->
+      <div class="card-container">
+        <div class="card">
+          <h3>Total de Pedidos</h3>
+          <div class="numero" id="total-entregas">0</div>
+        </div>
+
+        <div class="card">
+          <h3>Concluídas</h3>
+          <div class="numero" id="entregas-concluidas">0</div>
+        </div>
+
+        <div class="card">
+          <h3>Pendentes</h3>
+          <div class="numero" id="entregas-pendentes">0</div>
+        </div>
+
+        <div class="card">
+          <h3>Clientes</h3>
+          <div class="numero" id="total-clientes">0</div>
+        </div>
+      </div>
+
+      <!-- Mapa de acompanhamento -->
+      <h2>Acompanhamento em Tempo Real</h2>
+      <div id="mapa"></div>
+
+      <!-- Tabela de entregas do dia -->
+      <h2>Entregas Pendentes</h2>
+      <table id="tabela-entregas">
+        <thead>
+          <tr>
+            <th>Cliente</th>
+            <th>Endereço</th>
+            <th>Produto</th>
+            <th>Status</th>
+            <th>Ações</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Será preenchido pelo JavaScript -->
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/mapas.js"></script>
+    <script src="js/pedidos.js"></script>
+    <script src="js/dashboard.js"></script>
+  </body>
+</html>

@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes"
+    />
+    <title>Rota Klara - Entregador</title>
+    <link rel="stylesheet" href="css/estilo.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+  </head>
+  <body>
+    <div class="entregador-container">
+      <!-- Cabeçalho -->
+      <header class="topo-entregador">
+        <h1>Rota Klara</h1>
+        <div class="usuario-info">
+          <span id="nome-entregador"></span>
+          <button id="btn-logout" class="botao-perigo botao-logout-entregador">Sair</button>
+        </div>
+      </header>
+
+      <!-- Botões principais (acessibilidade) -->
+      <div class="botoes-principais">
+        <button id="btn-modo-lista" class="botao botao-entregador">
+          📋 Lista de Entregas
+        </button>
+        <button id="btn-modo-mapa" class="botao botao-entregador">
+          🗺️ Ver Mapa
+        </button>
+      </div>
+
+      <!-- Área de mensagens -->
+      <div id="mensagem" class="mensagem"></div>
+
+      <!-- MODO LISTA (visível por padrão) -->
+      <div id="modo-lista" style="display: block">
+        <h2>Suas entregas hoje</h2>
+        <div id="lista-entregas" class="lista-entregas">
+          <!-- Será preenchido pelo JavaScript -->
+        </div>
+      </div>
+
+      <!-- MODO MAPA (inicialmente oculto) -->
+      <div id="modo-mapa" style="display: none">
+        <h2>Rota otimizada</h2>
+        <div id="mapa-entregador" style="height: 400px"></div>
+        <button
+          id="btn-iniciar-rota"
+          class="botao botao-sucesso botao-entregador"
+        >
+          🚀 Iniciar Rota
+        </button>
+      </div>
+
+      <!-- Instruções de voz (acessibilidade) -->
+      <div class="acessibilidade-voz" aria-live="polite">
+        <p class="sr-only" id="anuncio-voz"></p>
+      </div>
+    </div>
+
+    <!-- Scripts -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/mapas.js"></script>
+    <script src="js/entregador.js"></script>
+  </body>
+</html>

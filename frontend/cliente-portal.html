@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rota Klara - Área do Cliente</title>
+    <link rel="stylesheet" href="css/estilo.css" />
+  </head>
+  <body>
+    <div class="container-dashboard">
+      <header class="topo-pagina">
+        <div>
+          <h1>Área do Cliente</h1>
+          <p class="subtitulo-pagina">Faça pedidos e acompanhe seu histórico</p>
+        </div>
+        <div class="usuario-info">
+          <span id="nome-usuario"></span>
+          <button id="btn-logout" class="botao-perigo">Sair</button>
+        </div>
+      </header>
+
+      <div id="mensagem" class="mensagem"></div>
+
+      <section class="card-container">
+        <article class="card">
+          <h3>Meu Nome</h3>
+          <div id="cliente-nome-card">-</div>
+        </article>
+        <article class="card">
+          <h3>Endereço</h3>
+          <div id="cliente-endereco-card">-</div>
+        </article>
+        <article class="card">
+          <h3>Total de Pedidos</h3>
+          <div class="numero" id="cliente-total-pedidos">0</div>
+        </article>
+      </section>
+
+      <section class="painel">
+        <div class="painel-topo">
+          <h2>Novo pedido</h2>
+          <button type="button" id="btn-adicionar-produto" class="botao">
+            Adicionar produto
+          </button>
+        </div>
+
+        <form id="form-pedido-cliente">
+          <div class="grid-formulario">
+            <div class="campo">
+              <label for="data-pedido">Data do pedido</label>
+              <input id="data-pedido" type="date" required />
+            </div>
+            <div class="campo">
+              <label for="hora-pedido">Hora</label>
+              <input id="hora-pedido" type="time" />
+            </div>
+            <div class="campo campo-amplo">
+              <label>Produtos</label>
+              <div id="produtos-container-cliente"></div>
+            </div>
+            <div class="campo campo-amplo">
+              <label for="observacoes">Observações</label>
+              <textarea id="observacoes" rows="3"></textarea>
+            </div>
+          </div>
+
+          <div class="resumo-pedido" id="resumo-pedido">Total: R$ 0,00</div>
+
+          <div class="acoes-linha">
+            <button type="submit" class="botao-sucesso">Enviar pedido</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="painel">
+        <div class="painel-topo">
+          <h2>Meus pedidos</h2>
+        </div>
+
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Data</th>
+              <th>Produtos</th>
+              <th>Valor</th>
+              <th>Status</th>
+            </tr>
+          </thead>
+          <tbody id="corpo-tabela-pedidos-cliente"></tbody>
+        </table>
+      </section>
+    </div>
+
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+    <script src="js/cliente-portal.js"></script>
+  </body>
+</html>

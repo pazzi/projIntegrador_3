@@ -1,0 +1,638 @@
+/* Estilos gerais para todos os elementos */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+/* Estilo do corpo da página */
+body {
+    font-family: Arial, sans-serif;  /* Fontes fáceis de ler */
+    line-height: 1.6;                /* Espaçamento entre linhas */
+    color: #333;                      /* Cor do texto (escuro) */
+    background-color: #f4f4f4;        /* Cor de fundo (claro) */
+    padding: 20px;
+}
+
+/* Container da página de login */
+.container-login {
+    max-width: 400px;                  /* Largura máxima */
+    margin: 50px auto;                  /* Centraliza na horizontal */
+    background-color: white;
+    padding: 30px;
+    border-radius: 10px;                /* Cantos arredondados */
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);  /* Sombra suave */
+}
+
+.container-login form {
+    display: flex;
+    flex-direction: column;
+}
+
+.container-login #btn-entrar {
+    width: 100%;
+    margin-top: 8px;
+}
+
+.acessibilidade {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    gap: 10px;
+    align-items: stretch;
+    margin-top: 18px;
+}
+
+.acessibilidade button {
+    min-height: 48px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    white-space: nowrap;
+}
+
+.acessibilidade #aumentar-fonte,
+.acessibilidade #diminuir-fonte {
+    min-width: 56px;
+    padding-left: 16px;
+    padding-right: 16px;
+}
+
+/* Container do dashboard principal */
+.container-dashboard {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.topo-pagina,
+.painel-topo,
+.barra-navegacao,
+.usuario-info,
+.acoes-linha,
+.grid-filtros,
+.grid-formulario,
+.acoes-tabela {
+    display: flex;
+    gap: 12px;
+}
+
+.topo-pagina,
+.painel-topo,
+.barra-navegacao {
+    align-items: center;
+}
+
+.topo-pagina,
+.painel-topo {
+    justify-content: space-between;
+}
+
+.barra-navegacao {
+    justify-content: flex-start;
+}
+
+.topo-pagina,
+.barra-navegacao,
+.painel {
+    margin-bottom: 20px;
+}
+
+.barra-navegacao {
+    flex-wrap: wrap;
+}
+
+.barra-navegacao .ativo {
+    background-color: #004c99;
+}
+
+.subtitulo-pagina {
+    color: #666;
+}
+
+.usuario-info {
+    align-items: center;
+}
+
+.topo-entregador {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.topo-entregador h1 {
+    margin: 0;
+}
+
+.topo-entregador .usuario-info {
+    margin-left: auto;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+}
+
+.botao-logout-entregador {
+    min-width: 88px;
+    padding: 10px 16px;
+    white-space: nowrap;
+}
+
+.painel {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.grid-filtros,
+.grid-formulario {
+    flex-wrap: wrap;
+}
+
+.grid-filtros .campo,
+.grid-formulario .campo {
+    flex: 1 1 240px;
+}
+
+.grid-formulario .campo-amplo {
+    flex-basis: 100%;
+}
+
+.painel-topo .botao,
+.painel-topo .botao-sucesso,
+.painel-topo .botao-perigo {
+    margin-left: auto;
+}
+
+.contador-lista {
+    color: #666;
+    font-weight: bold;
+}
+
+.botao-pequeno {
+    padding: 8px 12px;
+    font-size: 0.9em;
+}
+
+.modal-largo {
+    max-width: 760px;
+}
+
+.produto-item {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px;
+    background-color: #f8f9fa;
+    border-radius: 5px;
+}
+
+.produto-item select {
+    flex: 2;
+}
+
+.produto-item input {
+    flex: 1;
+}
+
+.btn-remover {
+    background-color: #dc3545;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    font-size: 1.2em;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.resumo-pedido {
+    margin-top: 20px;
+    padding: 15px;
+    background-color: #e9ecef;
+    border-radius: 5px;
+    font-weight: bold;
+    text-align: right;
+}
+
+.texto-apoio {
+    color: #666;
+    font-size: 0.95em;
+    margin-top: 8px;
+}
+
+#mapa-cliente {
+    height: 260px;
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background-color: #eef4fa;
+}
+
+#mapa-cadastro-cliente {
+    height: 260px;
+    width: 100%;
+    border-radius: 10px;
+    border: 1px solid #ddd;
+    background-color: #eef4fa;
+}
+
+/* Títulos */
+h1 {
+    color: #0066cc;                    /* Azul */
+    text-align: center;
+    margin-bottom: 10px;
+}
+
+h2 {
+    color: #666;
+    text-align: center;
+    margin-bottom: 30px;
+    font-size: 1.2em;
+}
+
+/* Campos do formulário */
+.campo {
+    margin-bottom: 20px;
+}
+
+label {
+    display: block;                     /* Faz o label ocupar linha inteira */
+    margin-bottom: 5px;
+    font-weight: bold;
+}
+
+input[type="text"],
+input[type="password"],
+input[type="email"],
+input[type="tel"],
+select,
+textarea {
+    width: 100%;                        /* Ocupa toda largura disponível */
+    padding: 12px;                       /* Espaçamento interno */
+    border: 2px solid #ddd;              /* Borda cinza */
+    border-radius: 5px;                  /* Cantos arredondados */
+    font-size: 1em;                      /* Tamanho da fonte */
+    transition: border-color 0.3s;        /* Transição suave */
+}
+
+/* Quando o campo está em foco (selecionado) */
+input:focus, select:focus, textarea:focus {
+    outline: none;                       /* Remove contorno padrão */
+    border-color: #0066cc;                /* Borda azul */
+}
+
+/* Botões */
+button, .botao {
+    background-color: #0066cc;            /* Fundo azul */
+    color: white;                          /* Texto branco */
+    padding: 12px 24px;                    /* Espaçamento interno */
+    border: none;                           /* Sem borda */
+    border-radius: 5px;                     /* Cantos arredondados */
+    font-size: 1em;                          /* Tamanho da fonte */
+    cursor: pointer;                         /* Mãozinha ao passar o mouse */
+    transition: background-color 0.3s;        /* Transição suave */
+}
+
+button:hover, .botao:hover {
+    background-color: #004c99;                /* Azul mais escuro ao passar mouse */
+}
+
+/* Botão de perigo (excluir, cancelar) */
+.botao-perigo {
+    background-color: #dc3545;                /* Vermelho */
+}
+
+.botao-perigo:hover {
+    background-color: #c82333;                /* Vermelho mais escuro */
+}
+
+/* Botão de sucesso (salvar) */
+.botao-sucesso {
+    background-color: #28a745;                /* Verde */
+}
+
+.botao-sucesso:hover {
+    background-color: #218838;                /* Verde mais escuro */
+}
+
+/* Mensagens de erro/sucesso */
+.mensagem {
+    padding: 10px;
+    margin-bottom: 20px;
+    border-radius: 5px;
+}
+
+.mensagem p {
+    margin: 0;
+}
+
+/* Cards para o dashboard */
+.card-container {
+    display: grid;                          /* Layout em grade */
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 20px;                               /* Espaço entre cards */
+    margin-bottom: 30px;
+}
+
+.card {
+    background-color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.card h3 {
+    color: #0066cc;
+    margin-bottom: 10px;
+}
+
+.card .numero {
+    font-size: 2.5em;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Tabelas */
+table {
+    width: 100%;
+    background-color: white;
+    border-collapse: collapse;               /* Remove espaços entre bordas */
+    margin-bottom: 20px;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+th, td {
+    padding: 12px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;            /* Linha separadora */
+}
+
+th {
+    background-color: #0066cc;
+    color: white;
+}
+
+tr:hover {
+    background-color: #f5f5f5;                /* Destaca linha ao passar mouse */
+}
+
+/* Mapa */
+#mapa {
+    height: 500px;                             /* Altura fixa para o mapa */
+    width: 100%;
+    margin-bottom: 20px;
+    border-radius: 10px;
+}
+
+.marcador-entrega-wrapper {
+    background: transparent;
+    border: 0;
+}
+
+.marcador-entrega {
+    position: relative;
+    width: 41px;
+    height: 49px;
+}
+
+.marcador-entrega__icone {
+    position: absolute;
+    left: 8px;
+    top: 8px;
+    width: 25px;
+    height: 41px;
+}
+
+.marcador-entrega__sombra {
+    position: absolute;
+    left: 0;
+    top: 8px;
+    width: 41px;
+    height: 41px;
+    pointer-events: none;
+}
+
+.marcador-entrega__etiqueta {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    z-index: 1;
+    min-width: 22px;
+    height: 22px;
+    padding: 0 5px;
+    border: 2px solid #ffffff;
+    border-radius: 999px;
+    background-color: #0b1f33;
+    color: #ffffff;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 18px;
+    text-align: center;
+    transform: translateX(-50%);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
+/* Interface do entregador (mobile) */
+.entregador-container {
+    max-width: 500px;                          /* Mais estreito para mobile */
+    margin: 0 auto;
+    background-color: white;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.lista-entregas {
+    list-style: none;                          /* Remove marcadores de lista */
+}
+
+.item-entrega {
+    background-color: #f8f9fa;
+    border-left: 5px solid #0066cc;             /* Barra lateral colorida */
+    margin-bottom: 15px;
+    padding: 15px;
+    border-radius: 5px;
+}
+
+.item-entrega .endereco {
+    font-weight: bold;
+    font-size: 1.2em;
+    margin-bottom: 5px;
+}
+
+.item-entrega .cliente {
+    color: #666;
+    margin-bottom: 10px;
+}
+
+/* Botões grandes para entregador (acessibilidade) */
+.botao-entregador {
+    width: 100%;                                /* Botão ocupa toda largura */
+    padding: 20px;                               /* Botão bem grande */
+    font-size: 1.3em;                            /* Fonte maior */
+    margin: 5px 0;
+    min-height: 70px;                            /* Altura mínima */
+}
+
+/* Modal de confirmação */
+.modal {
+    display: none;                               /* Começa escondido */
+    position: fixed;                             /* Fixo na tela */
+    z-index: 1000;                               /* Fica acima de tudo */
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.5);           /* Fundo semi-transparente */
+    overflow-y: auto;
+    padding: 24px 16px;
+}
+
+.modal-conteudo {
+    background-color: white;
+    margin: 4vh auto;                            /* Centraliza sem empurrar o rodapé para fora */
+    padding: 30px;
+    border-radius: 10px;
+    max-width: 500px;
+    text-align: center;
+    max-height: calc(100vh - 48px);
+    overflow-y: auto;
+}
+
+.acoes-linha {
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+/* ESTILOS DE ACESSIBILIDADE */
+
+@media (max-width: 768px) {
+    .painel-topo {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .painel-topo .botao,
+    .painel-topo .botao-sucesso,
+    .painel-topo .botao-perigo,
+    .acoes-linha button,
+    .acoes-linha .botao,
+    .acoes-linha .botao-sucesso,
+    .acoes-linha .botao-perigo {
+        width: 100%;
+        margin-left: 0;
+    }
+
+    .produto-item {
+        flex-wrap: wrap;
+    }
+
+    .produto-item select,
+    .produto-item input {
+        width: 100%;
+    }
+}
+
+/* Alto contraste */
+body.alto-contraste {
+    background-color: black;
+    color: yellow;
+}
+
+body.alto-contraste .card,
+body.alto-contraste table,
+body.alto-contraste .container-login,
+body.alto-contraste .entregador-container {
+    background-color: black;
+    color: yellow;
+    border: 2px solid yellow;
+}
+
+body.alto-contraste button,
+body.alto-contraste .botao {
+    background-color: yellow;
+    color: black;
+    border: 2px solid yellow;
+}
+
+body.alto-contraste input,
+body.alto-contraste select,
+body.alto-contraste textarea {
+    background-color: black;
+    color: yellow;
+    border: 2px solid yellow;
+}
+
+/* Navegação por teclado - destaca elemento focado */
+:focus {
+    outline: 3px solid #ff8c00 !important;       /* Laranja brilhante */
+    outline-offset: 2px;
+}
+
+/* Esconder elementos visualmente, mas manter para leitores de tela */
+.sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    border: 0;
+}
+
+/* Textos grandes para leitura fácil */
+.fonte-grande {
+    font-size: 1.2em;
+}
+
+/* Responsividade - adapta para telas pequenas */
+@media (max-width: 768px) {
+    .card-container {
+        grid-template-columns: 1fr;               /* Um card por linha */
+    }
+
+    .topo-pagina,
+    .painel-topo,
+    .topo-entregador {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .topo-entregador .usuario-info {
+        width: 100%;
+        justify-content: space-between;
+    }
+    
+    table {
+        display: block;                            /* Tabela vira bloco */
+        overflow-x: auto;                          /* Scroll horizontal se necessário */
+    }
+    
+    .container-login {
+        margin: 20px;
+        padding: 20px;
+    }
+
+    .acessibilidade {
+        grid-template-columns: 1fr;
+    }
+
+    .modal {
+        padding: 12px;
+    }
+
+    .modal-conteudo {
+        padding: 20px;
+        max-height: calc(100vh - 24px);
+    }
+    
+    .botao-entregador {
+        padding: 15px;
+        font-size: 1.1em;
+    }
+}

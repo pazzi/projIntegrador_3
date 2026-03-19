@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rota Klara - Cadastro de Cliente</title>
+    <link rel="stylesheet" href="css/estilo.css" />
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    />
+  </head>
+  <body>
+    <div class="container-dashboard" style="max-width: 900px">
+      <header class="topo-pagina">
+        <div>
+          <h1>Cadastro de Cliente</h1>
+          <p class="subtitulo-pagina">Crie sua conta para fazer pedidos online</p>
+        </div>
+        <a class="botao" href="login.html">Voltar ao login</a>
+      </header>
+
+      <div id="mensagem" class="mensagem"></div>
+
+      <section class="painel">
+        <form id="form-cadastro-cliente">
+          <div class="grid-formulario">
+            <div class="campo">
+              <label for="usuario">Usuário</label>
+              <input id="usuario" type="text" required />
+            </div>
+            <div class="campo">
+              <label for="senha">Senha</label>
+              <input id="senha" type="password" required />
+            </div>
+            <div class="campo campo-amplo">
+              <label for="nome">Nome completo</label>
+              <input id="nome" type="text" required />
+            </div>
+            <div class="campo">
+              <label for="cpf">CPF</label>
+              <input id="cpf" type="text" required />
+            </div>
+            <div class="campo">
+              <label for="email">E-mail</label>
+              <input id="email" type="email" />
+            </div>
+            <div class="campo campo-amplo">
+              <label for="endereco">Endereço</label>
+              <input id="endereco" type="text" required />
+            </div>
+            <div class="campo">
+              <label for="cep">CEP</label>
+              <input id="cep" type="text" />
+            </div>
+            <div class="campo">
+              <label for="cidade">Cidade</label>
+              <input id="cidade" type="text" value="Capivari" />
+            </div>
+            <div class="campo">
+              <label for="uf">UF</label>
+              <input id="uf" type="text" value="SP" maxlength="2" />
+            </div>
+            <div class="campo">
+              <label for="latitude">Latitude</label>
+              <input id="latitude" type="number" step="0.0000001" />
+            </div>
+            <div class="campo">
+              <label for="longitude">Longitude</label>
+              <input id="longitude" type="number" step="0.0000001" />
+            </div>
+            <div class="campo campo-amplo">
+              <div class="acoes-linha">
+                <button type="button" id="btn-buscar-coordenadas" class="botao">Buscar no mapa</button>
+              </div>
+              <p id="status-geocodificacao" class="texto-apoio">Você pode localizar automaticamente o endereço antes de concluir o cadastro.</p>
+            </div>
+            <div class="campo campo-amplo">
+              <div id="mapa-cadastro-cliente"></div>
+            </div>
+          </div>
+
+          <div class="acoes-linha">
+            <button type="submit" class="botao-sucesso">Criar conta</button>
+          </div>
+        </form>
+      </section>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/mapas.js"></script>
+    <script src="js/cadastro-cliente.js"></script>
+  </body>
+</html>

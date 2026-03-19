@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="pt-br">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rota Klara - Login</title>
+    <link rel="stylesheet" href="css/estilo.css" />
+  </head>
+  <body>
+    <div class="container-login">
+      <h1>Rota Klara</h1>
+      <h2>Sistema de Gestão de Entregas</h2>
+
+      <!-- Área para mensagens de erro -->
+      <div id="mensagem-erro" class="mensagem"></div>
+
+      <!-- Formulário de login -->
+      <form id="form-login">
+        <div class="campo">
+          <label for="usuario">Usuário:</label>
+          <input
+            type="text"
+            id="usuario"
+            name="usuario"
+            required
+            placeholder="Digite seu usuário"
+          />
+        </div>
+
+        <div class="campo">
+          <label for="senha">Senha:</label>
+          <input
+            type="password"
+            id="senha"
+            name="senha"
+            required
+            placeholder="Digite sua senha"
+          />
+        </div>
+
+        <div class="campo">
+          <label>
+            <input type="checkbox" id="lembrar" /> Lembrar meu acesso
+          </label>
+        </div>
+
+        <button type="submit" id="btn-entrar">Entrar</button>
+      </form>
+
+      <!-- Opções de acessibilidade -->
+      <div class="acessibilidade">
+        <button id="alto-contraste">Alto Contraste</button>
+        <button id="aumentar-fonte">A+</button>
+        <button id="diminuir-fonte">A-</button>
+      </div>
+
+      <div style="margin-top: 18px; text-align: center">
+        <a href="cadastro-cliente.html">Sou cliente e quero me cadastrar</a>
+      </div>
+    </div>
+
+    <!-- Carregar os scripts JavaScript -->
+    <script src="js/config.js"></script>
+    <script src="js/utils.js"></script>
+    <script src="js/auth.js"></script>
+  </body>
+</html>
