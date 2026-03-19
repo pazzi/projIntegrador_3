@@ -1,7 +1,26 @@
+function resolverApiUrl() {
+    const portaBackend = '3001';
+    const hostname = window.location.hostname || 'localhost';
+    const protocolo = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    const origemAtual = window.location.origin;
+    const usandoArquivoLocal = window.location.protocol === 'file:';
+    const ambienteLocal = hostname === 'localhost' || hostname === '127.0.0.1';
+
+    if (usandoArquivoLocal) {
+        return `${protocolo}//localhost:${portaBackend}/api`;
+    }
+
+    if (ambienteLocal && window.location.port !== portaBackend) {
+        return `${protocolo}//${hostname}:${portaBackend}/api`;
+    }
+
+    return origemAtual + '/api';
+}
+
 // Objeto com as configurações do sistema
 const CONFIG = {
     // URL da API do nosso backend (onde o Node.js estará rodando)
-    API_URL: window.location.origin + '/api',
+    API_URL: resolverApiUrl(),
 
     DISTRIBUIDORA: {
         NOME: 'Distribuidora',

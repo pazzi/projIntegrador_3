@@ -58,6 +58,12 @@ function fazerLogin() {
         if (dados.sucesso) {
             // Salvar informações do usuário (para usar em outras páginas)
             salvarSessao(dados.usuario, dados.tipo, dados.token, lembrar);
+            if (dados.nome) {
+                sessionStorage.setItem('nomeUsuario', dados.nome);
+            }
+            if (dados.cliente) {
+                sessionStorage.setItem('perfilCliente', JSON.stringify(dados.cliente));
+            }
             
             // Redirecionar para a página correta (admin ou entregador)
             if (dados.tipo === 'admin') {
@@ -125,8 +131,10 @@ function verificarSessao() {
 function fazerLogout() {
     // Limpar as sessões
     sessionStorage.removeItem('usuarioLogado');
+    sessionStorage.removeItem('nomeUsuario');
     sessionStorage.removeItem('tipoUsuario');
     sessionStorage.removeItem('token');
+    sessionStorage.removeItem('perfilCliente');
     
     // Redirecionar para a página de login
     window.location.href = 'login.html';

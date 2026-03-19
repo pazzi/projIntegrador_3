@@ -1,11 +1,7 @@
 const express = require('express');
 const { getPool } = require('../db');
-const { authMiddleware } = require('../middlewares/auth');
 
 const router = express.Router();
-
-// Aplicar middleware de autenticação a todas as rotas
-router.use(authMiddleware);
 
 /**
  * @swagger

@@ -5,8 +5,9 @@ const { listarEntregas } = require('../services/pedidos');
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação a todas as rotas
-router.use(authMiddleware);
+router.use('/dashboard', authMiddleware);
+router.use('/entregas', authMiddleware);
+router.use('/entregador', authMiddleware);
 
 async function pedidoPertenceAoEntregador(pedidoId, entregadorId) {
   const pool = getPool();

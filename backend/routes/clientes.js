@@ -4,9 +4,7 @@ const { authMiddleware, requireRole } = require('../middlewares/auth');
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação a todas as rotas
-router.use(authMiddleware);
-router.use(requireRole(['admin']));
+router.use('/clientes', authMiddleware, requireRole(['admin']));
 
 /**
  * @swagger

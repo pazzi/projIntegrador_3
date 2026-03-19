@@ -7,8 +7,8 @@ const { buscarClientePorUsuarioId } = require('../services/clientes');
 
 const router = express.Router();
 
-// Aplicar middleware de autenticação a todas as rotas
-router.use(authMiddleware);
+router.use('/pedidos', authMiddleware);
+router.use('/cliente', authMiddleware);
 
 /**
  * @swagger
@@ -404,7 +404,7 @@ router.delete('/pedidos/:id', requireRole(['admin']), async (req, res) => {
  *       500:
  *         description: Erro interno do servidor
  */
-router.get('/cliente/perfil', requireRole(['outros']), async (req, res) => {
+router.get('/cliente/perfil', async (req, res) => {
   try {
     const cliente = await buscarClientePorUsuarioId(req.usuario.id);
 
@@ -484,7 +484,7 @@ router.get('/cliente/perfil', requireRole(['outros']), async (req, res) => {
  *       500:
  *         description: Erro interno do servidor
  */
-router.get('/cliente/pedidos', requireRole(['outros']), async (req, res) => {
+router.get('/cliente/pedidos', async (req, res) => {
   try {
     const cliente = await buscarClientePorUsuarioId(req.usuario.id);
 
@@ -506,7 +506,7 @@ router.get('/cliente/pedidos', requireRole(['outros']), async (req, res) => {
   }
 });
 
-router.post('/cliente/pedidos', requireRole(['outros']), async (req, res) => {
+router.post('/cliente/pedidos', async (req, res) => {
   const erroValidacao = await validarPayloadPedido(req.body, { requireClienteId: false });
   if (erroValidacao) {
     return res.status(400).json({

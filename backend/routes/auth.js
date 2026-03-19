@@ -2,6 +2,7 @@ const express = require('express');
 const { hashPassword, isPasswordHashed, verifyPassword } = require('../auth-utils');
 const { getPool } = require('../db');
 const { tokens, gerarToken } = require('../middlewares/auth');
+const { buscarClientePorUsuarioId } = require('../services/clientes');
 
 const router = express.Router();
 
@@ -139,12 +140,25 @@ router.post('/login', async (req, res) => {
       tipo: usuarioEncontrado.role
     });
 
+    let cliente = null;
+    if (usuarioEncontrado.role === 'outros') {
+      cliente = await buscarClientePorUsuarioId(usuarioEncontrado.id);
+    }
+
     return res.json({
       sucesso: true,
       usuario: usuarioEncontrado.usuario,
       nome: usuarioEncontrado.nome,
       tipo: usuarioEncontrado.role,
-      token
+      token,
+      cliente: cliente
+        ? {
+            id: cliente.id,
+            nome: cliente.nome,
+            endereco: cliente.endereco,
+            email: cliente.email || null
+          }
+        : null
     });
   } catch (error) {
     return res.status(500).json({

@@ -6,6 +6,7 @@ let contadorItensCliente = 0;
 document.addEventListener('DOMContentLoaded', async function () {
     const usuario = sessionStorage.getItem('usuarioLogado');
     const tipo = sessionStorage.getItem('tipoUsuario');
+    const nomeUsuario = sessionStorage.getItem('nomeUsuario');
 
     if (!usuario) {
         window.location.href = 'login.html';
@@ -21,7 +22,7 @@ document.addEventListener('DOMContentLoaded', async function () {
         return;
     }
 
-    document.getElementById('nome-usuario').textContent = 'Olá, ' + usuario;
+    document.getElementById('nome-usuario').textContent = 'Olá, ' + (nomeUsuario || usuario);
     document.getElementById('btn-logout').addEventListener('click', fazerLogout);
     document.getElementById('btn-adicionar-produto').addEventListener('click', function () {
         adicionarProdutoCliente();
@@ -29,6 +30,8 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('form-pedido-cliente').addEventListener('submit', salvarPedidoCliente);
 
     definirDataHoraPadraoCliente();
+    preencherPerfilClienteCacheOuSessao();
+    preencherProdutosClienteCache();
     await Promise.all([carregarPerfilCliente(), carregarProdutosCliente()]);
     adicionarProdutoCliente();
     await carregarPedidosCliente();
@@ -44,8 +47,23 @@ async function apiCliente(path, options = {}) {
         }
     });
 
-    const dados = await resposta.json();
+    const contentType = resposta.headers.get('content-type') || '';
+    const corpo = await resposta.text();
+    let dados = null;
+
+    if (contentType.includes('application/json')) {
+        dados = corpo ? JSON.parse(corpo) : null;
+    }
+
     if (!resposta.ok || (dados && dados.sucesso === false)) {
+        if (resposta.status === 401) {
+            throw new Error('Sua sessao expirou. Entre novamente para continuar.');
+        }
+
+        if (!contentType.includes('application/json')) {
+            throw new Error('A API respondeu em formato inesperado. Verifique se o backend está rodando na mesma porta do frontend.');
+        }
+
         throw new Error((dados && dados.mensagem) || 'Erro ao processar requisição');
     }
 
@@ -53,18 +71,98 @@ async function apiCliente(path, options = {}) {
 }
 
 async function carregarPerfilCliente() {
-    perfilCliente = await apiCliente('/cliente/perfil', { method: 'GET' });
-    document.getElementById('cliente-nome-card').textContent = perfilCliente.nome || '-';
-    document.getElementById('cliente-endereco-card').textContent = perfilCliente.endereco || '-';
+    try {
+        perfilCliente = await apiCliente('/cliente/perfil', { method: 'GET' });
+        sessionStorage.setItem('perfilCliente', JSON.stringify(perfilCliente));
+        preencherCardsPerfilCliente(perfilCliente);
+        document.getElementById('nome-usuario').textContent = 'Olá, ' + (perfilCliente.nome || sessionStorage.getItem('nomeUsuario') || sessionStorage.getItem('usuarioLogado'));
+    } catch (erro) {
+        console.error('Erro ao carregar perfil do cliente:', erro);
+        if (erro.message && erro.message.includes('sessao expirou')) {
+            mostrarErro(erro.message, document.getElementById('mensagem'));
+            setTimeout(() => fazerLogout(), 1200);
+            return;
+        }
+        mostrarErro(erro.message || 'Não foi possível carregar o perfil do cliente', document.getElementById('mensagem'));
+    }
+}
+
+function preencherPerfilClienteCacheOuSessao() {
+    const perfilCache = sessionStorage.getItem('perfilCliente');
+
+    if (perfilCache) {
+        try {
+            preencherCardsPerfilCliente(JSON.parse(perfilCache));
+            return;
+        } catch (_erro) {
+            sessionStorage.removeItem('perfilCliente');
+        }
+    }
+
+    preencherCardsPerfilCliente({
+        nome: sessionStorage.getItem('nomeUsuario') || sessionStorage.getItem('usuarioLogado') || '-',
+        endereco: '-'
+    });
+}
+
+function preencherCardsPerfilCliente(perfil) {
+    document.getElementById('cliente-nome-card').textContent = perfil.nome || '-';
+    document.getElementById('cliente-endereco-card').textContent = perfil.endereco || '-';
 }
 
 async function carregarProdutosCliente() {
-    const dados = await apiCliente('/produtos', { method: 'GET' });
-    produtosCliente = dados.map((produto) => ({
-        id: Number(produto.id),
-        nome: produto.nome,
-        valor: Number(produto.valor || 0)
-    }));
+    try {
+        const dados = await apiCliente('/produtos', { method: 'GET' });
+        produtosCliente = normalizarProdutosCliente(dados);
+        sessionStorage.setItem('produtosCliente', JSON.stringify(produtosCliente));
+        atualizarOpcoesProdutosCliente();
+    } catch (erro) {
+        console.error('Erro ao carregar produtos do cliente:', erro);
+        if (erro.message && erro.message.includes('sessao expirou')) {
+            mostrarErro(erro.message, document.getElementById('mensagem'));
+            setTimeout(() => fazerLogout(), 1200);
+            return;
+        }
+        mostrarErro(erro.message || 'Não foi possível carregar os produtos', document.getElementById('mensagem'));
+        atualizarOpcoesProdutosCliente();
+    }
+}
+
+function preencherProdutosClienteCache() {
+    const produtosCache = sessionStorage.getItem('produtosCliente');
+
+    if (!produtosCache) {
+        return;
+    }
+
+    try {
+        produtosCliente = normalizarProdutosCliente(JSON.parse(produtosCache));
+    } catch (_erro) {
+        sessionStorage.removeItem('produtosCliente');
+        produtosCliente = [];
+    }
+}
+
+function normalizarProdutosCliente(listaProdutos) {
+    return Array.isArray(listaProdutos)
+        ? listaProdutos.map((produto) => ({
+            id: Number(produto.id),
+            nome: produto.nome,
+            valor: Number(produto.valor || 0)
+        }))
+        : [];
+}
+
+function atualizarOpcoesProdutosCliente() {
+    document.querySelectorAll('#produtos-container-cliente .produto-select').forEach((select) => {
+        const valorAtual = select.value;
+        preencherOpcoesSelectProdutoCliente(select);
+        if (valorAtual) {
+            select.value = valorAtual;
+        }
+    });
+
+    document.getElementById('btn-adicionar-produto').disabled = produtosCliente.length === 0;
 }
 
 async function carregarPedidosCliente() {
@@ -74,6 +172,11 @@ async function carregarPedidosCliente() {
         renderizarTabelaPedidosCliente();
     } catch (erro) {
         console.error('Erro ao carregar pedidos do cliente:', erro);
+        if (erro.message && erro.message.includes('sessao expirou')) {
+            mostrarErro(erro.message, document.getElementById('mensagem'));
+            setTimeout(() => fazerLogout(), 1200);
+            return;
+        }
         mostrarErro(erro.message || 'Não foi possível carregar os pedidos', document.getElementById('mensagem'));
     }
 }
@@ -125,12 +228,7 @@ function adicionarProdutoCliente(produtoId = '', quantidade = 1) {
     container.appendChild(div);
 
     const select = div.querySelector('.produto-select');
-    produtosCliente.forEach((produto) => {
-        const option = document.createElement('option');
-        option.value = produto.id;
-        option.textContent = `${produto.nome} - R$ ${produto.valor.toFixed(2)}`;
-        select.appendChild(option);
-    });
+    preencherOpcoesSelectProdutoCliente(select);
 
     if (produtoId) {
         select.value = String(produtoId);
@@ -140,6 +238,25 @@ function adicionarProdutoCliente(produtoId = '', quantidade = 1) {
     div.querySelector('.produto-quantidade').addEventListener('input', calcularTotalCliente);
     atualizarBotoesRemoverCliente();
     calcularTotalCliente();
+}
+
+function preencherOpcoesSelectProdutoCliente(select) {
+    select.innerHTML = '<option value="">Selecione...</option>';
+
+    if (produtosCliente.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Nenhum produto disponível';
+        select.appendChild(option);
+        return;
+    }
+
+    produtosCliente.forEach((produto) => {
+        const option = document.createElement('option');
+        option.value = produto.id;
+        option.textContent = `${produto.nome} - R$ ${produto.valor.toFixed(2)}`;
+        select.appendChild(option);
+    });
 }
 
 function removerProdutoCliente(index) {
