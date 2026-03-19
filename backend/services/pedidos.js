@@ -1,64 +1,4 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-
-const { DB_NAME, initializeDatabase } = require('./db');
-const { loggingMiddleware } = require('./middlewares/auth');
-
-// Importar rotas
-const authRoutes = require('./routes/auth');
-const clientesRoutes = require('./routes/clientes');
-const pedidosRoutes = require('./routes/pedidos');
-const entregasRoutes = require('./routes/entregas');
-const produtosRoutes = require('./routes/produtos');
-
-const app = express();
-const port = Number(process.env.PORT || 3000);
-const frontendDir = path.resolve(__dirname, '../frontend');
-
-app.use(cors());
-app.use(express.json());
-app.use(loggingMiddleware);
-app.use(express.static(frontendDir));
-
-// Rotas da API
-app.use('/api', authRoutes);
-app.use('/api', clientesRoutes);
-app.use('/api', pedidosRoutes);
-app.use('/api', entregasRoutes);
-app.use('/api', produtosRoutes);
-
-function gerarToken(usuario) {
-  return `token-${usuario.id}-${Date.now()}`;
-}
-
-function authMiddleware(req, res, next) {
-  const authHeader = req.headers.authorization || '';
-  const [, token] = authHeader.split(' ');
-
-  if (!token || !tokens.has(token)) {
-    return res.status(401).json({
-      sucesso: false,
-      mensagem: 'Token ausente ou invalido'
-    });
-  }
-
-  req.usuario = tokens.get(token);
-  return next();
-}
-
-function requireRole(roles) {
-  return (req, res, next) => {
-    if (!req.usuario || !roles.includes(req.usuario.tipo)) {
-      return res.status(403).json({
-        sucesso: false,
-        mensagem: 'Acesso nao autorizado'
-      });
-    }
-
-    return next();
-  };
-}
+const { getPool } = require('../db');
 
 function normalizarEntrega(row) {
   return {
@@ -72,10 +12,6 @@ function normalizarEntrega(row) {
     longitude: row.longitude !== null ? Number(row.longitude) : null,
     observacao: row.observacao || ''
   };
-}
-
-function validarStatusPedido(status) {
-  return ['pendente', 'em-rota', 'entregue', 'ausente', 'cancelado'].includes(status);
 }
 
 async function montarPedidos(whereClause = '', params = []) {
@@ -160,54 +96,13 @@ async function buscarPedidoPorId(id) {
   return pedidos[0] || null;
 }
 
-async function buscarClientePorUsuarioId(usuarioId) {
-  const pool = getPool();
-  const [rows] = await pool.query(
-    `
-      SELECT id, usuario_id AS usuarioId, cpf, nome, endereco, latitude, email, longitude
-      FROM clientes
-      WHERE usuario_id = ?
-      LIMIT 1
-    `,
-    [usuarioId]
-  );
-
-  return rows[0] || null;
-}
-
-async function validarPayloadPedido(payload) {
-  const { clienteId, data, hora, status, produtos } = payload;
-
-  if (!clienteId || !data) {
-    return 'Cliente e data do pedido sao obrigatorios';
-  }
-
-  if (!Array.isArray(produtos) || produtos.length === 0) {
-    return 'Informe ao menos um produto no pedido';
-  }
-
-  if (status && !validarStatusPedido(status)) {
-    return 'Status invalido';
-  }
-
-  const itensInvalidos = produtos.some((item) => !item.produtoId || Number(item.quantidade) <= 0);
-  if (itensInvalidos) {
-    return 'Todos os itens precisam de produto e quantidade valida';
-  }
-
-  if (hora && !/^\d{2}:\d{2}$/.test(hora)) {
-    return 'Hora invalida';
-  }
-
-  return null;
-}
-
 async function salvarItensPedido(connection, pedidoId, produtos) {
   if (produtos.length === 0) {
     return;
   }
 
   const produtoIds = produtos.map((item) => Number(item.produtoId));
+
   const [produtosDb] = await connection.query(
     `
       SELECT id, valor
@@ -286,62 +181,10 @@ async function listarEntregas({ entregadorId, role, somenteHoje = true, status }
   return rows.map(normalizarEntrega);
 }
 
-// Rota de saúde
-app.get('/api/health', async (_req, res) => {
-  try {
-    const { getPool } = require('./db');
-    const pool = getPool();
-    await pool.query('SELECT 1');
-
-    return res.json({
-      sucesso: true,
-      status: 'ok'
-    });
-  } catch (error) {
-    return res.status(500).json({
-      sucesso: false,
-      mensagem: 'Falha ao conectar no banco',
-      detalhe: error.message
-    });
-  }
-});
-
-// Rota para servir o frontend
-app.get('/', (_req, res) => {
-  res.sendFile(path.join(frontendDir, 'login.html'));
-});
-
-// Middleware para rotas não encontradas
-app.use((req, res) => {
-  console.warn(`[404] Rota nao encontrada: ${req.method} ${req.originalUrl}`);
-  res.status(404).json({
-    sucesso: false,
-    mensagem: `Rota nao encontrada: ${req.method} ${req.originalUrl}`
-  });
-});
-
-async function startServer() {
-  console.log(`[startup] Arquivo: ${__filename}`);
-  console.log(`[startup] CWD: ${process.cwd()}`);
-  console.log(`[startup] Porta configurada: ${port}`);
-  console.log(`[startup] Banco configurado: ${DB_NAME}`);
-  await initializeDatabase();
-  console.log('[startup] Banco inicializado com sucesso');
-  console.log('[startup] Rotas API esperadas: /api/health, /api/login, /api/clientes, /api/produtos, /api/pedidos');
-
-  return app.listen(port, () => {
-    console.log(`[startup] Backend rodando em http://localhost:${port}`);
-  });
-}
-
-if (require.main === module) {
-  startServer().catch((error) => {
-    console.error('Falha ao iniciar backend:', error.message);
-    process.exit(1);
-  });
-}
-
 module.exports = {
-  app,
-  startServer
+  montarPedidos,
+  buscarPedidoPorId,
+  salvarItensPedido,
+  listarEntregas,
+  normalizarEntrega
 };
