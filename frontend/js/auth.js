@@ -61,9 +61,6 @@ function fazerLogin() {
             if (dados.nome) {
                 sessionStorage.setItem('nomeUsuario', dados.nome);
             }
-            if (dados.cliente) {
-                sessionStorage.setItem('perfilCliente', JSON.stringify(dados.cliente));
-            }
             
             // Redirecionar para a página correta (admin ou entregador)
             if (dados.tipo === 'admin') {
@@ -134,7 +131,6 @@ function fazerLogout() {
     sessionStorage.removeItem('nomeUsuario');
     sessionStorage.removeItem('tipoUsuario');
     sessionStorage.removeItem('token');
-    sessionStorage.removeItem('perfilCliente');
     
     // Redirecionar para a página de login
     window.location.href = 'login.html';

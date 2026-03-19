@@ -30,8 +30,10 @@ document.addEventListener('DOMContentLoaded', async function () {
     document.getElementById('form-pedido-cliente').addEventListener('submit', salvarPedidoCliente);
 
     definirDataHoraPadraoCliente();
-    preencherPerfilClienteCacheOuSessao();
-    preencherProdutosClienteCache();
+    preencherCardsPerfilCliente({
+        nome: nomeUsuario || usuario,
+        endereco: '-'
+    });
     await Promise.all([carregarPerfilCliente(), carregarProdutosCliente()]);
     adicionarProdutoCliente();
     await carregarPedidosCliente();
@@ -73,7 +75,6 @@ async function apiCliente(path, options = {}) {
 async function carregarPerfilCliente() {
     try {
         perfilCliente = await apiCliente('/cliente/perfil', { method: 'GET' });
-        sessionStorage.setItem('perfilCliente', JSON.stringify(perfilCliente));
         preencherCardsPerfilCliente(perfilCliente);
         document.getElementById('nome-usuario').textContent = 'Olá, ' + (perfilCliente.nome || sessionStorage.getItem('nomeUsuario') || sessionStorage.getItem('usuarioLogado'));
     } catch (erro) {
@@ -87,24 +88,6 @@ async function carregarPerfilCliente() {
     }
 }
 
-function preencherPerfilClienteCacheOuSessao() {
-    const perfilCache = sessionStorage.getItem('perfilCliente');
-
-    if (perfilCache) {
-        try {
-            preencherCardsPerfilCliente(JSON.parse(perfilCache));
-            return;
-        } catch (_erro) {
-            sessionStorage.removeItem('perfilCliente');
-        }
-    }
-
-    preencherCardsPerfilCliente({
-        nome: sessionStorage.getItem('nomeUsuario') || sessionStorage.getItem('usuarioLogado') || '-',
-        endereco: '-'
-    });
-}
-
 function preencherCardsPerfilCliente(perfil) {
     document.getElementById('cliente-nome-card').textContent = perfil.nome || '-';
     document.getElementById('cliente-endereco-card').textContent = perfil.endereco || '-';
@@ -114,7 +97,6 @@ async function carregarProdutosCliente() {
     try {
         const dados = await apiCliente('/produtos', { method: 'GET' });
         produtosCliente = normalizarProdutosCliente(dados);
-        sessionStorage.setItem('produtosCliente', JSON.stringify(produtosCliente));
         atualizarOpcoesProdutosCliente();
     } catch (erro) {
         console.error('Erro ao carregar produtos do cliente:', erro);
@@ -125,21 +107,6 @@ async function carregarProdutosCliente() {
         }
         mostrarErro(erro.message || 'Não foi possível carregar os produtos', document.getElementById('mensagem'));
         atualizarOpcoesProdutosCliente();
-    }
-}
-
-function preencherProdutosClienteCache() {
-    const produtosCache = sessionStorage.getItem('produtosCliente');
-
-    if (!produtosCache) {
-        return;
-    }
-
-    try {
-        produtosCliente = normalizarProdutosCliente(JSON.parse(produtosCache));
-    } catch (_erro) {
-        sessionStorage.removeItem('produtosCliente');
-        produtosCliente = [];
     }
 }
 
