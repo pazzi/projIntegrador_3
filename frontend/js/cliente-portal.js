@@ -116,7 +116,8 @@ function normalizarProdutosCliente(listaProdutos) {
             id: Number(produto.id),
             nome: produto.nome,
             valor: Number(produto.valor || 0),
-            estoque: Number(produto.estoque || 0)
+            estoque: Number(produto.estoque || 0),
+            estoqueMinimo: Number(produto.estoqueMinimo || 0)
         }))
         : [];
 }
@@ -241,8 +242,8 @@ function formatarTextoProdutoCliente(produto, estoqueDisponivel) {
         return `${produto.nome} - R$ ${produto.valor.toFixed(2)} (sem estoque)`;
     }
 
-    if (estoqueDisponivel <= 10) {
-        return `${produto.nome} - R$ ${produto.valor.toFixed(2)} (${estoqueDisponivel} un. - baixo estoque)`;
+    if (estoqueDisponivel <= produto.estoqueMinimo) {
+        return `${produto.nome} - R$ ${produto.valor.toFixed(2)} (${estoqueDisponivel} un. - abaixo do mínimo)`;
     }
 
     return `${produto.nome} - R$ ${produto.valor.toFixed(2)} (${estoqueDisponivel} un.)`;

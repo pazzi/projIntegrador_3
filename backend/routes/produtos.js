@@ -21,6 +21,8 @@ const router = express.Router();
  *           type: number
  *         estoque:
  *           type: integer
+ *         estoqueMinimo:
+ *           type: integer
  *         data:
  *           type: string
  *           format: date
@@ -51,7 +53,7 @@ router.get('/produtos', async (_req, res) => {
     const pool = getPool();
     const [rows] = await pool.query(
       `
-        SELECT id, nome, descricao, valor, estoque, data
+        SELECT id, nome, descricao, valor, estoque, estoque_minimo AS estoqueMinimo, data
         FROM produtos
         ORDER BY nome
       `
@@ -69,40 +71,41 @@ router.get('/produtos', async (_req, res) => {
 
 router.post('/produtos', authMiddleware, requireRole(['admin']), async (req, res) => {
   try {
-    const { nome, descricao, valor, estoque, data } = req.body;
+    const { nome, descricao, valor, estoque, estoqueMinimo, data } = req.body;
 
-    if (!nome || valor === undefined || valor === null || estoque === undefined || estoque === null) {
+    if (!nome || valor === undefined || valor === null || estoque === undefined || estoque === null || estoqueMinimo === undefined || estoqueMinimo === null) {
       return res.status(400).json({
         sucesso: false,
-        mensagem: 'Nome, valor e estoque sao obrigatorios'
+        mensagem: 'Nome, valor, estoque e estoque minimo sao obrigatorios'
       });
     }
 
-    if (Number(valor) <= 0 || Number(estoque) < 0) {
+    if (Number(valor) <= 0 || Number(estoque) < 0 || Number(estoqueMinimo) < 0) {
       return res.status(400).json({
         sucesso: false,
-        mensagem: 'Valor deve ser positivo e estoque nao pode ser negativo'
+        mensagem: 'Valor deve ser positivo e os estoques nao podem ser negativos'
       });
     }
 
     const pool = getPool();
     const [result] = await pool.query(
       `
-        INSERT INTO produtos (nome, descricao, valor, estoque, data)
-        VALUES (?, ?, ?, ?, ?)
+        INSERT INTO produtos (nome, descricao, valor, estoque, estoque_minimo, data)
+        VALUES (?, ?, ?, ?, ?, ?)
       `,
       [
         nome.trim(),
         descricao ? descricao.trim() : null,
         Number(valor),
         Number(estoque),
+        Number(estoqueMinimo),
         data || new Date().toISOString().slice(0, 10)
       ]
     );
 
     const [rows] = await pool.query(
       `
-        SELECT id, nome, descricao, valor, estoque, data
+        SELECT id, nome, descricao, valor, estoque, estoque_minimo AS estoqueMinimo, data
         FROM produtos
         WHERE id = ?
       `,
@@ -124,19 +127,19 @@ router.post('/produtos', authMiddleware, requireRole(['admin']), async (req, res
 
 router.put('/produtos/:id', authMiddleware, requireRole(['admin']), async (req, res) => {
   try {
-    const { nome, descricao, valor, estoque, data } = req.body;
+    const { nome, descricao, valor, estoque, estoqueMinimo, data } = req.body;
 
-    if (!nome || valor === undefined || valor === null || estoque === undefined || estoque === null) {
+    if (!nome || valor === undefined || valor === null || estoque === undefined || estoque === null || estoqueMinimo === undefined || estoqueMinimo === null) {
       return res.status(400).json({
         sucesso: false,
-        mensagem: 'Nome, valor e estoque sao obrigatorios'
+        mensagem: 'Nome, valor, estoque e estoque minimo sao obrigatorios'
       });
     }
 
-    if (Number(valor) <= 0 || Number(estoque) < 0) {
+    if (Number(valor) <= 0 || Number(estoque) < 0 || Number(estoqueMinimo) < 0) {
       return res.status(400).json({
         sucesso: false,
-        mensagem: 'Valor deve ser positivo e estoque nao pode ser negativo'
+        mensagem: 'Valor deve ser positivo e os estoques nao podem ser negativos'
       });
     }
 
@@ -144,7 +147,7 @@ router.put('/produtos/:id', authMiddleware, requireRole(['admin']), async (req, 
     const [result] = await pool.query(
       `
         UPDATE produtos
-        SET nome = ?, descricao = ?, valor = ?, estoque = ?, data = ?
+        SET nome = ?, descricao = ?, valor = ?, estoque = ?, estoque_minimo = ?, data = ?
         WHERE id = ?
       `,
       [
@@ -152,6 +155,7 @@ router.put('/produtos/:id', authMiddleware, requireRole(['admin']), async (req, 
         descricao ? descricao.trim() : null,
         Number(valor),
         Number(estoque),
+        Number(estoqueMinimo),
         data || new Date().toISOString().slice(0, 10),
         Number(req.params.id)
       ]
@@ -166,7 +170,7 @@ router.put('/produtos/:id', authMiddleware, requireRole(['admin']), async (req, 
 
     const [rows] = await pool.query(
       `
-        SELECT id, nome, descricao, valor, estoque, data
+        SELECT id, nome, descricao, valor, estoque, estoque_minimo AS estoqueMinimo, data
         FROM produtos
         WHERE id = ?
       `,

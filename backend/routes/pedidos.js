@@ -586,6 +586,8 @@ router.post('/cliente/pedidos', async (req, res) => {
     await connection.beginTransaction();
 
     const { data, hora, observacoes, produtos } = req.body;
+    await sincronizarEstoquePedido(connection, [], 'cancelado', produtos, 'pendente');
+
     const [result] = await connection.query(
       `
         INSERT INTO pedidos (cliente_id, usuario_id, entregador_id, data_pedido, hora_pedido, data_entrega, status, observacoes)

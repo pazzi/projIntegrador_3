@@ -117,7 +117,8 @@ async function carregarProdutos() {
         nome: produto.nome || '',
         preco: Number(produto.valor || 0),
         descricao: produto.descricao || '',
-        estoque: Number(produto.estoque || 0)
+        estoque: Number(produto.estoque || 0),
+        estoqueMinimo: Number(produto.estoqueMinimo || 0)
     }));
 
     atualizarSelectsProdutos();
@@ -185,8 +186,8 @@ function formatarTextoProdutoPedido(produto, estoqueDisponivel) {
         return `${produto.nome} - R$ ${produto.preco.toFixed(2)} (sem estoque)`;
     }
 
-    if (estoqueDisponivel <= 10) {
-        return `${produto.nome} - R$ ${produto.preco.toFixed(2)} (${estoqueDisponivel} un. - baixo estoque)`;
+    if (estoqueDisponivel <= produto.estoqueMinimo) {
+        return `${produto.nome} - R$ ${produto.preco.toFixed(2)} (${estoqueDisponivel} un. - abaixo do mínimo)`;
     }
 
     return `${produto.nome} - R$ ${produto.preco.toFixed(2)} (${estoqueDisponivel} un.)`;

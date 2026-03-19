@@ -70,6 +70,7 @@ async function ensureTables() {
       descricao TEXT NULL,
       valor DECIMAL(10, 2) NOT NULL,
       estoque INT NOT NULL DEFAULT 0,
+      estoque_minimo INT NOT NULL DEFAULT 10,
       data DATE NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
@@ -154,6 +155,7 @@ async function ensureConstraintIfMissing(tableName, constraintName, statement) {
 async function ensureSchemaUpgrades() {
   await ensureColumnIfMissing('clientes', 'usuario_id', 'usuario_id INT NULL UNIQUE AFTER id');
   await ensureColumnIfMissing('produtos', 'estoque', 'estoque INT NOT NULL DEFAULT 0 AFTER valor');
+  await ensureColumnIfMissing('produtos', 'estoque_minimo', 'estoque_minimo INT NOT NULL DEFAULT 10 AFTER estoque');
   await ensureConstraintIfMissing(
     'clientes',
     'fk_clientes_usuario',
@@ -176,6 +178,13 @@ async function ensureSchemaUpgrades() {
         WHEN 'Gás de Cozinha 13kg' THEN 30
         WHEN 'Suporte para Galão' THEN 20
         ELSE 15
+      END,
+      estoque_minimo = CASE nome
+        WHEN 'Água Mineral 20L' THEN 20
+        WHEN 'Água Mineral 10L' THEN 15
+        WHEN 'Gás de Cozinha 13kg' THEN 8
+        WHEN 'Suporte para Galão' THEN 5
+        ELSE 5
       END
     `);
   }
@@ -213,12 +222,12 @@ async function seedIfEmpty() {
 
   if (produtosCount.total === 0) {
     await pool.query(`
-      INSERT INTO produtos (nome, descricao, valor, estoque, data)
+      INSERT INTO produtos (nome, descricao, valor, estoque, estoque_minimo, data)
       VALUES
-        ('Água Mineral 20L', 'Galão de água mineral 20 litros', 12.00, 80, CURDATE()),
-        ('Água Mineral 10L', 'Galão de água mineral 10 litros', 8.00, 60, CURDATE()),
-        ('Gás de Cozinha 13kg', 'Botijão de gás GLP 13kg', 110.00, 30, CURDATE()),
-        ('Suporte para Galão', 'Suporte reforçado para galão de água', 35.00, 20, CURDATE())
+        ('Água Mineral 20L', 'Galão de água mineral 20 litros', 12.00, 80, 20, CURDATE()),
+        ('Água Mineral 10L', 'Galão de água mineral 10 litros', 8.00, 60, 15, CURDATE()),
+        ('Gás de Cozinha 13kg', 'Botijão de gás GLP 13kg', 110.00, 30, 8, CURDATE()),
+        ('Suporte para Galão', 'Suporte reforçado para galão de água', 35.00, 20, 5, CURDATE())
     `);
   }
 

@@ -79,13 +79,14 @@ function normalizarProduto(produto) {
         descricao: produto.descricao || '',
         valor: Number(produto.valor || 0),
         estoque: Number(produto.estoque || 0),
+        estoqueMinimo: Number(produto.estoqueMinimo || 0),
         data: produto.data ? String(produto.data).slice(0, 10) : ''
     };
 }
 
 function atualizarIndicadores(lista) {
     const totalEstoque = lista.reduce((total, produto) => total + produto.estoque, 0);
-    const baixoEstoque = lista.filter((produto) => produto.estoque > 0 && produto.estoque <= 10).length;
+    const baixoEstoque = lista.filter((produto) => produto.estoque > 0 && produto.estoque <= produto.estoqueMinimo).length;
 
     document.getElementById('total-produtos').textContent = lista.length;
     document.getElementById('total-estoque').textContent = totalEstoque;
@@ -109,7 +110,7 @@ function renderizarTabelaProdutos(lista) {
             <td><strong>${produto.nome}</strong></td>
             <td>${produto.descricao || '<span style="color:#777;">Sem descrição</span>'}</td>
             <td>R$ ${produto.valor.toFixed(2)}</td>
-            <td>${renderizarStatusEstoque(produto.estoque)}</td>
+            <td>${renderizarStatusEstoque(produto)}</td>
             <td>${formatarData(produto.data)}</td>
             <td class="acoes-tabela">
                 <button class="botao botao-pequeno" onclick="abrirModalEditarProduto(${produto.id})">Editar</button>
@@ -120,16 +121,16 @@ function renderizarTabelaProdutos(lista) {
     });
 }
 
-function renderizarStatusEstoque(estoque) {
-    if (estoque === 0) {
+function renderizarStatusEstoque(produto) {
+    if (produto.estoque === 0) {
         return '<strong style="color:#dc3545;">Sem estoque</strong>';
     }
 
-    if (estoque <= 10) {
-        return `<strong style="color:#fd7e14;">${estoque} un.</strong>`;
+    if (produto.estoque <= produto.estoqueMinimo) {
+        return `<strong style="color:#fd7e14;">${produto.estoque} un. / mín. ${produto.estoqueMinimo}</strong>`;
     }
 
-    return `<strong style="color:#198754;">${estoque} un.</strong>`;
+    return `<strong style="color:#198754;">${produto.estoque} un.</strong>`;
 }
 
 function aplicarFiltros() {
@@ -143,8 +144,8 @@ function aplicarFiltros() {
 
         const bateEstoque =
             !estoque ||
-            (estoque === 'disponivel' && produto.estoque > 10) ||
-            (estoque === 'baixo' && produto.estoque > 0 && produto.estoque <= 10) ||
+            (estoque === 'disponivel' && produto.estoque > produto.estoqueMinimo) ||
+            (estoque === 'baixo' && produto.estoque > 0 && produto.estoque <= produto.estoqueMinimo) ||
             (estoque === 'zerado' && produto.estoque === 0);
 
         return bateTexto && bateEstoque;
@@ -167,6 +168,7 @@ function abrirModalNovoProduto() {
     document.getElementById('produto-descricao').value = '';
     document.getElementById('produto-valor').value = '';
     document.getElementById('produto-estoque').value = 0;
+    document.getElementById('produto-estoque-minimo').value = 10;
     document.getElementById('produto-data').value = new Date().toISOString().split('T')[0];
     document.getElementById('modal-produto').style.display = 'block';
 }
@@ -184,6 +186,7 @@ function abrirModalEditarProduto(id) {
     document.getElementById('produto-descricao').value = produto.descricao || '';
     document.getElementById('produto-valor').value = produto.valor.toFixed(2);
     document.getElementById('produto-estoque').value = produto.estoque;
+    document.getElementById('produto-estoque-minimo').value = produto.estoqueMinimo;
     document.getElementById('produto-data').value = produto.data;
     document.getElementById('modal-produto').style.display = 'block';
 }
@@ -201,11 +204,12 @@ async function salvarProduto(event) {
         descricao: document.getElementById('produto-descricao').value.trim(),
         valor: Number(document.getElementById('produto-valor').value || 0),
         estoque: Number(document.getElementById('produto-estoque').value || 0),
+        estoqueMinimo: Number(document.getElementById('produto-estoque-minimo').value || 0),
         data: document.getElementById('produto-data').value
     };
 
-    if (!payload.nome || payload.valor <= 0 || payload.estoque < 0 || !payload.data) {
-        mostrarErro('Nome, valor, estoque e data são obrigatórios', document.getElementById('mensagem'));
+    if (!payload.nome || payload.valor <= 0 || payload.estoque < 0 || payload.estoqueMinimo < 0 || !payload.data) {
+        mostrarErro('Nome, valor, estoque, estoque mínimo e data são obrigatórios', document.getElementById('mensagem'));
         return;
     }
 
