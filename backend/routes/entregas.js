@@ -15,7 +15,7 @@ async function pedidoPertenceAoEntregador(pedidoId, entregadorId) {
     `
       SELECT id
       FROM pedidos
-      WHERE id = ? AND entregador_id = ?
+      WHERE id = ? AND entregador_id = ? AND requer_entrega = 1
       LIMIT 1
     `,
     [pedidoId, entregadorId]
@@ -115,6 +115,7 @@ router.get('/dashboard/indicadores', requireRole(['admin']), async (_req, res) =
           SUM(CASE WHEN status = 'entregue' THEN 1 ELSE 0 END) AS concluidas,
           SUM(CASE WHEN status = 'pendente' THEN 1 ELSE 0 END) AS pendentes
         FROM pedidos
+        WHERE requer_entrega = 1
       `
     );
 

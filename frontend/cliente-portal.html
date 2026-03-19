@@ -55,6 +55,19 @@
               <input id="hora-pedido" type="time" />
             </div>
             <div class="campo campo-amplo">
+              <label>Forma de recebimento</label>
+              <div class="opcoes-escolha">
+                <label>
+                  <input type="radio" name="requer-entrega" value="true" checked />
+                  Entregar no meu endereco
+                </label>
+                <label>
+                  <input type="radio" name="requer-entrega" value="false" />
+                  Vou retirar no local
+                </label>
+              </div>
+            </div>
+            <div class="campo campo-amplo">
               <label>Produtos</label>
               <div id="produtos-container-cliente"></div>
             </div>
@@ -84,6 +97,7 @@
               <th>Data</th>
               <th>Produtos</th>
               <th>Valor</th>
+              <th>Atendimento</th>
               <th>Status</th>
             </tr>
           </thead>

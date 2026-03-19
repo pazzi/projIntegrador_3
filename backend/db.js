@@ -85,6 +85,7 @@ async function ensureTables() {
       data_pedido DATE NOT NULL,
       hora_pedido TIME NULL,
       data_entrega DATE NOT NULL,
+      requer_entrega TINYINT(1) NOT NULL DEFAULT 1,
       status ENUM('pendente', 'em-rota', 'entregue', 'ausente', 'cancelado') NOT NULL DEFAULT 'pendente',
       observacoes TEXT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -156,6 +157,7 @@ async function ensureSchemaUpgrades() {
   await ensureColumnIfMissing('clientes', 'usuario_id', 'usuario_id INT NULL UNIQUE AFTER id');
   await ensureColumnIfMissing('produtos', 'estoque', 'estoque INT NOT NULL DEFAULT 0 AFTER valor');
   await ensureColumnIfMissing('produtos', 'estoque_minimo', 'estoque_minimo INT NOT NULL DEFAULT 10 AFTER estoque');
+  await ensureColumnIfMissing('pedidos', 'requer_entrega', 'requer_entrega TINYINT(1) NOT NULL DEFAULT 1 AFTER data_entrega');
   await ensureConstraintIfMissing(
     'clientes',
     'fk_clientes_usuario',

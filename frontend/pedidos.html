@@ -317,13 +317,14 @@
               <th>Endereço</th>
               <th>Produtos</th>
               <th>Valor Total</th>
+              <th>Atendimento</th>
               <th>Status</th>
               <th>Ações</th>
             </tr>
           </thead>
           <tbody id="corpo-tabela-pedidos">
             <tr>
-              <td colspan="8" style="text-align: center; padding: 30px">
+              <td colspan="9" style="text-align: center; padding: 30px">
                 Carregando pedidos...
               </td>
             </tr>
@@ -398,6 +399,20 @@
             <div class="campo">
               <label for="hora-pedido">Hora</label>
               <input type="time" id="hora-pedido" />
+            </div>
+          </div>
+
+          <div class="campo">
+            <label>Forma de atendimento</label>
+            <div class="opcoes-escolha">
+              <label>
+                <input type="radio" name="pedido-requer-entrega" value="true" checked />
+                Entrega
+              </label>
+              <label>
+                <input type="radio" name="pedido-requer-entrega" value="false" />
+                Retirada
+              </label>
             </div>
           </div>
 

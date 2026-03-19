@@ -4,6 +4,91 @@ let mapaEntregador = null;
 let rotaAtual = null;
 let intervaloLocalizacao = null;
 
+function normalizarChaveParada(entrega) {
+    if (entrega.latitude && entrega.longitude) {
+        return `${Number(entrega.latitude).toFixed(5)}|${Number(entrega.longitude).toFixed(5)}`;
+    }
+
+    return (entrega.endereco || '').trim().toLowerCase();
+}
+
+function agruparEntregasPorParada(entregas) {
+    const grupos = new Map();
+
+    entregas.forEach((entrega) => {
+        const chave = normalizarChaveParada(entrega);
+
+        if (!grupos.has(chave)) {
+            grupos.set(chave, {
+                id: entrega.id,
+                pedidoIds: [],
+                cliente: '',
+                clientes: [],
+                endereco: entrega.endereco || 'Endereco nao informado',
+                produto: '',
+                produtos: [],
+                pedidos: [],
+                quantidade: 0,
+                status: entrega.status,
+                latitude: entrega.latitude,
+                longitude: entrega.longitude,
+                observacao: '',
+                observacoes: []
+            });
+        }
+
+        const grupo = grupos.get(chave);
+        grupo.pedidoIds.push(Number(entrega.id));
+        grupo.quantidade += Number(entrega.quantidade || 0);
+        grupo.pedidos.push({
+            id: Number(entrega.id),
+            cliente: entrega.cliente || '',
+            produto: entrega.produto || '',
+            quantidade: Number(entrega.quantidade || 0),
+            observacao: entrega.observacao || ''
+        });
+
+        if (entrega.cliente && !grupo.clientes.includes(entrega.cliente)) {
+            grupo.clientes.push(entrega.cliente);
+        }
+
+        if (entrega.produto) {
+            grupo.produtos.push(entrega.produto);
+        }
+
+        if (entrega.observacao && !grupo.observacoes.includes(entrega.observacao)) {
+            grupo.observacoes.push(entrega.observacao);
+        }
+    });
+
+    return Array.from(grupos.values()).map((grupo) => ({
+        ...grupo,
+        cliente: grupo.clientes.join(', '),
+        produto: grupo.produtos.join(' | '),
+        observacao: grupo.observacoes.join(' | ')
+    }));
+}
+
+function escaparHtml(texto) {
+    return String(texto || '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+}
+
+function renderizarPedidosDaParadaHtml(entrega) {
+    return entrega.pedidos.map((pedido) => `
+        <div style="padding: 8px 10px; margin-top: 8px; background-color: #f8f9fa; border-radius: 6px;">
+            <div><strong>Pedido #${pedido.id}</strong></div>
+            <div>${escaparHtml(pedido.cliente || 'Cliente não informado')}</div>
+            <div>${escaparHtml(pedido.produto || 'Produto não informado')} - ${pedido.quantidade}</div>
+            ${pedido.observacao ? `<div><small>${escaparHtml(pedido.observacao)}</small></div>` : ''}
+        </div>
+    `).join('');
+}
+
 async function apiEntregador(path, options = {}) {
     const resposta = await fetch(CONFIG.API_URL + path, {
         ...options,
@@ -63,9 +148,6 @@ document.addEventListener('DOMContentLoaded', function() {
 function mostrarModoLista() {
     document.getElementById('modo-lista').style.display = 'block';
     document.getElementById('modo-mapa').style.display = 'none';
-    
-    // Anunciar para leitores de tela
-    anunciarVoz('Modo lista ativado. Mostrando lista de entregas.');
 }
 
 function mostrarModoMapa() {
@@ -81,16 +163,14 @@ function mostrarModoMapa() {
     if (entregasHoje.length > 0) {
         desenharRotaEntregador();
     }
-    
-    // Anunciar para leitores de tela
-    anunciarVoz('Modo mapa ativado. Mostrando rota otimizada.');
 }
 
 // Carregar pedidos pendentes do entregador
 async function carregarEntregas() {
     try {
         const dados = await apiEntregador('/entregas/pendentes', { method: 'GET' });
-        entregasHoje = Array.isArray(dados) ? dados : [];
+        const entregasAgrupadas = agruparEntregasPorParada(Array.isArray(dados) ? dados : []);
+        entregasHoje = entregasAgrupadas;
 
         if (entregasHoje.length === 0) {
             document.getElementById('lista-entregas').innerHTML = '<p>Nenhum pedido pendente encontrado. ☕</p>';
@@ -172,13 +252,13 @@ function renderizarListaEntregas(entregas) {
             </div>
             <div class="endereco">${entrega.endereco}</div>
             <div class="cliente">${entrega.cliente}</div>
-            <div class="produto">${entrega.produto} - ${entrega.quantidade}</div>
-            <div class="observacao">${entrega.observacao || ''}</div>
+            <div class="observacao">Pedidos desta parada: ${entrega.pedidoIds.map((id) => `#${id}`).join(', ')}</div>
+            ${renderizarPedidosDaParadaHtml(entrega)}
             <div class="botoes-entrega">
-                <button class="botao botao-sucesso botao-entregador" onclick="marcarEntregue(${entrega.id})">
+                <button class="botao botao-sucesso botao-entregador" onclick="marcarEntregue(${indice})">
                     ✅ Marcar como entregue
                 </button>
-                <button class="botao botao-perigo botao-entregador" onclick="clienteAusente(${entrega.id})">
+                <button class="botao botao-perigo botao-entregador" onclick="clienteAusente(${indice})">
                     👤 Cliente ausente
                 </button>
             </div>
@@ -225,10 +305,13 @@ function desenharRotaEntregador(entregas = entregasHoje) {
     
     entregasComCoordenadas.forEach((entrega, i) => {
         const cor = entrega.status === 'entregue' ? 'verde' : 'vermelho';
+        const detalhesPedidos = entrega.pedidos.map((pedido) =>
+            `Pedido #${pedido.id} - ${escaparHtml(pedido.cliente || 'Cliente')}<br>${escaparHtml(pedido.produto || 'Produto')} - ${pedido.quantidade}${pedido.observacao ? `<br><small>${escaparHtml(pedido.observacao)}</small>` : ''}`
+        ).join('<br><br>');
         adicionarMarcador(
             mapaEntregador,
             [entrega.latitude, entrega.longitude],
-            `${i+1}º - ${entrega.cliente}<br>${entrega.endereco || 'Endereco nao informado'}`,
+            `${i+1}º - ${escaparHtml(entrega.endereco || 'Endereco nao informado')}<br><br>${detalhesPedidos}`,
             cor,
             { numeroEtiqueta: i + 1 }
         );
@@ -247,42 +330,59 @@ function desenharRotaEntregador(entregas = entregasHoje) {
 }
 
 // Marcar entrega como realizada
-function marcarEntregue(id) {
+function marcarEntregue(indiceParada) {
     // Confirmar com modal
     if (!confirm('Confirmar que a entrega foi realizada?')) {
         return;
     }
-    
-    atualizarStatusEntrega(id, 'entregue');
+
+    const parada = entregasHoje[indiceParada];
+    if (!parada) {
+        return;
+    }
+
+    atualizarStatusEntrega(parada.pedidoIds, 'entregue');
 }
 
 // Marcar cliente como ausente
-function clienteAusente(id) {
+function clienteAusente(indiceParada) {
     if (!confirm('Cliente não estava presente? A entrega será marcada para outro momento.')) {
         return;
     }
-    
-    atualizarStatusEntrega(id, 'ausente');
+
+    const parada = entregasHoje[indiceParada];
+    if (!parada) {
+        return;
+    }
+
+    atualizarStatusEntrega(parada.pedidoIds, 'ausente');
 }
 
 // Atualizar status da entrega na API
-function atualizarStatusEntrega(id, status) {
-    fetch(CONFIG.API_URL + '/entregas/' + id + '/status', {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + sessionStorage.getItem('token')
-        },
-        body: JSON.stringify({ status: status })
-    })
-    .then(resposta => resposta.json())
-    .then(dados => {
-        if (dados.sucesso) {
-            mostrarSucesso('Status atualizado!', document.getElementById('mensagem'));
-            carregarEntregas(); // Recarregar lista
-        } else {
-            mostrarErro('Erro ao atualizar status', document.getElementById('mensagem'));
+function atualizarStatusEntrega(ids, status) {
+    const pedidoIds = Array.isArray(ids) ? ids : [ids];
+
+    Promise.all(
+        pedidoIds.map((id) =>
+            fetch(CONFIG.API_URL + '/entregas/' + id + '/status', {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': 'Bearer ' + sessionStorage.getItem('token')
+                },
+                body: JSON.stringify({ status: status })
+            }).then((resposta) => resposta.json())
+        )
+    )
+    .then((resultados) => {
+        const houveErro = resultados.some((dados) => !dados || dados.sucesso === false);
+        if (houveErro) {
+            mostrarErro('Erro ao atualizar status de uma ou mais entregas', document.getElementById('mensagem'));
+            return;
         }
+
+        mostrarSucesso('Status atualizado!', document.getElementById('mensagem'));
+        carregarEntregas();
     })
     .catch(erro => {
         console.error('Erro:', erro);
@@ -384,11 +484,11 @@ function configurarComandosVoz() {
         } else if (comando.includes('entregue')) {
             // Marcar atual como entregue
             if (entregasHoje.length > 0) {
-                marcarEntregue(entregasHoje[0].id);
+                marcarEntregue(0);
             }
         } else if (comando.includes('ausente')) {
             if (entregasHoje.length > 0) {
-                clienteAusente(entregasHoje[0].id);
+                clienteAusente(0);
             }
         } else {
             anunciarVoz('Comando não reconhecido');

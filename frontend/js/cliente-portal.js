@@ -156,7 +156,7 @@ function renderizarTabelaPedidosCliente() {
     tbody.innerHTML = '';
 
     if (pedidosCliente.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding: 30px;">Nenhum pedido encontrado</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center; padding: 30px;">Nenhum pedido encontrado</td></tr>';
         return;
     }
 
@@ -167,6 +167,7 @@ function renderizarTabelaPedidosCliente() {
             <td>${formatarData(pedido.data)}<br><small>${pedido.hora || ''}</small></td>
             <td>${(pedido.produtos || []).map((produto) => `${produto.quantidade}x ${produto.nome}`).join('<br>')}</td>
             <td>R$ ${Number(pedido.valorTotal || 0).toFixed(2)}</td>
+            <td>${pedido.requerEntrega ? 'Entrega' : 'Retirada'}</td>
             <td>${pedido.status}</td>
         `;
         tbody.appendChild(tr);
@@ -322,6 +323,11 @@ function calcularTotalCliente() {
     document.getElementById('resumo-pedido').textContent = `Total: R$ ${total.toFixed(2)}`;
 }
 
+function obterRequerEntregaCliente() {
+    const campoSelecionado = document.querySelector('input[name="requer-entrega"]:checked');
+    return !campoSelecionado || campoSelecionado.value !== 'false';
+}
+
 async function salvarPedidoCliente(event) {
     event.preventDefault();
 
@@ -358,6 +364,7 @@ async function salvarPedidoCliente(event) {
                 clienteId: perfilCliente.id,
                 data: document.getElementById('data-pedido').value,
                 hora: document.getElementById('hora-pedido').value,
+                requerEntrega: obterRequerEntregaCliente(),
                 observacoes: document.getElementById('observacoes').value.trim(),
                 produtos
             })
@@ -368,6 +375,7 @@ async function salvarPedidoCliente(event) {
         contadorItensCliente = 0;
         adicionarProdutoCliente();
         document.getElementById('observacoes').value = '';
+        document.querySelector('input[name="requer-entrega"][value="true"]').checked = true;
         calcularTotalCliente();
         await carregarPedidosCliente();
     } catch (erro) {

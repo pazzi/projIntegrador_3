@@ -4,7 +4,7 @@ function validarStatusPedido(status) {
 
 async function validarPayloadPedido(payload, options = {}) {
   const { requireClienteId = true } = options;
-  const { clienteId, data, hora, status, produtos } = payload;
+  const { clienteId, data, hora, status, produtos, requerEntrega } = payload;
 
   if ((requireClienteId && !clienteId) || !data) {
     return 'Cliente e data do pedido sao obrigatorios';
@@ -25,6 +25,13 @@ async function validarPayloadPedido(payload, options = {}) {
 
   if (hora && !/^\d{2}:\d{2}$/.test(hora)) {
     return 'Hora invalida';
+  }
+
+  if (
+    requerEntrega !== undefined &&
+    ![true, false, 1, 0, '1', '0', 'true', 'false', 'sim', 'nao', 'não'].includes(requerEntrega)
+  ) {
+    return 'Indicador de entrega invalido';
   }
 
   return null;

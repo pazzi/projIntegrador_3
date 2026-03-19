@@ -8,6 +8,7 @@ function normalizarEntrega(row) {
     produto: row.produto,
     quantidade: Number(row.quantidade || 0),
     status: row.status,
+    requerEntrega: Boolean(row.requerEntrega),
     latitude: row.latitude !== null ? Number(row.latitude) : null,
     longitude: row.longitude !== null ? Number(row.longitude) : null,
     observacao: row.observacao || ''
@@ -24,6 +25,7 @@ async function montarPedidos(whereClause = '', params = []) {
         TIME_FORMAT(p.hora_pedido, '%H:%i') AS hora,
         DATE_FORMAT(p.data_entrega, '%Y-%m-%d') AS dataEntrega,
         p.cliente_id AS clienteId,
+        p.requer_entrega AS requerEntrega,
         c.nome AS clienteNome,
         c.endereco,
         c.email,
@@ -34,7 +36,7 @@ async function montarPedidos(whereClause = '', params = []) {
       INNER JOIN clientes c ON c.id = p.cliente_id
       LEFT JOIN pedido_itens pi ON pi.pedido_id = p.id
       ${whereClause}
-      GROUP BY p.id, p.data_pedido, p.hora_pedido, p.data_entrega, p.cliente_id, c.nome, c.endereco, c.email, p.observacoes, p.status
+      GROUP BY p.id, p.data_pedido, p.hora_pedido, p.data_entrega, p.requer_entrega, p.cliente_id, c.nome, c.endereco, c.email, p.observacoes, p.status
       ORDER BY p.data_pedido DESC, p.hora_pedido DESC, p.id DESC
     `,
     params
@@ -81,6 +83,7 @@ async function montarPedidos(whereClause = '', params = []) {
     hora: row.hora,
     dataEntrega: row.dataEntrega,
     clienteId: row.clienteId,
+    requerEntrega: Boolean(row.requerEntrega),
     clienteNome: row.clienteNome,
     endereco: row.endereco,
     email: row.email,
@@ -249,9 +252,24 @@ async function atualizarStatusPedidoComEstoque(connection, pedidoId, statusNovo)
   return { mudou: true };
 }
 
+async function buscarEntregadorPadrao(connection) {
+  const executor = connection || getPool();
+  const [rows] = await executor.query(
+    `
+      SELECT id, nome
+      FROM usuarios
+      WHERE role = 'entregador'
+      ORDER BY id ASC
+      LIMIT 1
+    `
+  );
+
+  return rows[0] || null;
+}
+
 async function listarEntregas({ entregadorId, role, somenteHoje = true, status } = {}) {
   const pool = getPool();
-  const filtros = [];
+  const filtros = ['p.requer_entrega = 1'];
   const params = [];
 
   if (somenteHoje) {
@@ -277,6 +295,7 @@ async function listarEntregas({ entregadorId, role, somenteHoje = true, status }
         GROUP_CONCAT(CONCAT(pr.nome, ' x', pi.quantidade) ORDER BY pi.id SEPARATOR ', ') AS produto,
         SUM(pi.quantidade) AS quantidade,
         p.status,
+        p.requer_entrega AS requerEntrega,
         c.latitude,
         c.longitude,
         p.observacoes AS observacao
@@ -301,6 +320,7 @@ module.exports = {
   salvarItensPedido,
   sincronizarEstoquePedido,
   atualizarStatusPedidoComEstoque,
+  buscarEntregadorPadrao,
   listarEntregas,
   normalizarEntrega
 };

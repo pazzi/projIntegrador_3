@@ -7,7 +7,8 @@ const {
   buscarPedidoPorId,
   buscarItensPedido,
   salvarItensPedido,
-  sincronizarEstoquePedido
+  sincronizarEstoquePedido,
+  buscarEntregadorPadrao
 } = require('../services/pedidos');
 const { buscarClientePorUsuarioId } = require('../services/clientes');
 
@@ -15,6 +16,44 @@ const router = express.Router();
 
 router.use('/pedidos', authMiddleware);
 router.use('/cliente', authMiddleware);
+
+function normalizarRequerEntrega(valor, valorPadrao = true) {
+  if (valor === undefined || valor === null || valor === '') {
+    return valorPadrao;
+  }
+
+  if (typeof valor === 'boolean') {
+    return valor;
+  }
+
+  if (typeof valor === 'number') {
+    return valor !== 0;
+  }
+
+  if (typeof valor === 'string') {
+    return !['false', '0', 'nao', 'não'].includes(valor.trim().toLowerCase());
+  }
+
+  return Boolean(valor);
+}
+
+async function resolverEntregadorDoPedido(connection, requerEntrega, entregadorAtualId = null) {
+  if (!requerEntrega) {
+    return null;
+  }
+
+  if (entregadorAtualId) {
+    return entregadorAtualId;
+  }
+
+  const entregador = await buscarEntregadorPadrao(connection);
+
+  if (!entregador) {
+    throw new Error('Nenhum entregador disponivel para este pedido');
+  }
+
+  return Number(entregador.id);
+}
 
 /**
  * @swagger
@@ -266,20 +305,23 @@ router.post('/pedidos', requireRole(['admin']), async (req, res) => {
 
     const { clienteId, data, hora, observacoes, status, produtos } = req.body;
     const statusPedido = status || 'pendente';
+    const requerEntrega = normalizarRequerEntrega(req.body.requerEntrega, true);
+    const entregadorId = await resolverEntregadorDoPedido(connection, requerEntrega);
     await sincronizarEstoquePedido(connection, [], 'cancelado', produtos, statusPedido);
 
     const [result] = await connection.query(
       `
-        INSERT INTO pedidos (cliente_id, usuario_id, entregador_id, data_pedido, hora_pedido, data_entrega, status, observacoes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO pedidos (cliente_id, usuario_id, entregador_id, data_pedido, hora_pedido, data_entrega, requer_entrega, status, observacoes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         Number(clienteId),
         req.usuario.id,
-        null,
+        entregadorId,
         data,
         hora || null,
         data,
+        requerEntrega ? 1 : 0,
         statusPedido,
         observacoes || ''
       ]
@@ -324,7 +366,7 @@ router.put('/pedidos/:id', requireRole(['admin']), async (req, res) => {
     const { clienteId, data, hora, observacoes, status, produtos } = req.body;
     const [pedidoAtualRows] = await connection.query(
       `
-        SELECT id, status
+        SELECT id, status, entregador_id AS entregadorId, requer_entrega AS requerEntrega
         FROM pedidos
         WHERE id = ?
         LIMIT 1
@@ -344,19 +386,27 @@ router.put('/pedidos/:id', requireRole(['admin']), async (req, res) => {
     const pedidoAtual = pedidoAtualRows[0];
     const itensAtuais = await buscarItensPedido(connection, pedidoId);
     const statusPedido = status || 'pendente';
+    const requerEntrega = normalizarRequerEntrega(req.body.requerEntrega, Boolean(pedidoAtual.requerEntrega));
+    const entregadorId = await resolverEntregadorDoPedido(
+      connection,
+      requerEntrega,
+      requerEntrega ? pedidoAtual.entregadorId : null
+    );
     await sincronizarEstoquePedido(connection, itensAtuais, pedidoAtual.status, produtos, statusPedido);
 
     const [updateResult] = await connection.query(
       `
         UPDATE pedidos
-        SET cliente_id = ?, data_pedido = ?, hora_pedido = ?, data_entrega = ?, status = ?, observacoes = ?
+        SET cliente_id = ?, entregador_id = ?, data_pedido = ?, hora_pedido = ?, data_entrega = ?, requer_entrega = ?, status = ?, observacoes = ?
         WHERE id = ?
       `,
       [
         Number(clienteId),
+        entregadorId,
         data,
         hora || null,
         data,
+        requerEntrega ? 1 : 0,
         statusPedido,
         observacoes || '',
         pedidoId
@@ -586,20 +636,23 @@ router.post('/cliente/pedidos', async (req, res) => {
     await connection.beginTransaction();
 
     const { data, hora, observacoes, produtos } = req.body;
+    const requerEntrega = normalizarRequerEntrega(req.body.requerEntrega, true);
+    const entregadorId = await resolverEntregadorDoPedido(connection, requerEntrega);
     await sincronizarEstoquePedido(connection, [], 'cancelado', produtos, 'pendente');
 
     const [result] = await connection.query(
       `
-        INSERT INTO pedidos (cliente_id, usuario_id, entregador_id, data_pedido, hora_pedido, data_entrega, status, observacoes)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO pedidos (cliente_id, usuario_id, entregador_id, data_pedido, hora_pedido, data_entrega, requer_entrega, status, observacoes)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       `,
       [
         cliente.id,
         req.usuario.id,
-        null,
+        entregadorId,
         data,
         hora || null,
         data,
+        requerEntrega ? 1 : 0,
         'pendente',
         observacoes || ''
       ]

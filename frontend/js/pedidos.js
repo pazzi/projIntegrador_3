@@ -141,6 +141,7 @@ function normalizarPedido(pedido) {
         data: pedido.data || '',
         hora: pedido.hora || '',
         clienteId: Number(pedido.clienteId),
+        requerEntrega: pedido.requerEntrega !== false && pedido.requerEntrega !== 0 && pedido.requerEntrega !== '0',
         clienteNome: pedido.clienteNome || '',
         endereco: pedido.endereco || '',
         email: pedido.email || '',
@@ -249,7 +250,7 @@ function renderizarTabelaPedidos(listaPedidos) {
     tbody.innerHTML = '';
 
     if (listaPedidos.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; padding: 30px;">Nenhum pedido encontrado</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 30px;">Nenhum pedido encontrado</td></tr>';
         return;
     }
 
@@ -267,6 +268,7 @@ function renderizarTabelaPedidos(listaPedidos) {
             <td><small>${pedido.endereco}</small></td>
             <td><small>${listaProdutos}</small></td>
             <td><strong>R$ ${pedido.valorTotal.toFixed(2)}</strong></td>
+            <td><small>${pedido.requerEntrega ? 'Entrega' : 'Retirada'}</small></td>
             <td><span class="badge-status ${obterClasseStatus(pedido.status)}">${obterTextoStatus(pedido.status)}</span></td>
             <td class="acoes-pedido">
                 <button class="botao botao-pequeno" onclick="verDetalhesPedido(${pedido.id})">Ver</button>
@@ -309,6 +311,7 @@ function abrirModalNovoPedido() {
     document.getElementById('observacoes').value = '';
     document.getElementById('status-pedido').value = 'pendente';
     document.getElementById('campo-status').style.display = 'none';
+    document.querySelector('input[name="pedido-requer-entrega"][value="true"]').checked = true;
     document.getElementById('produtos-container').innerHTML = '';
     contadorProdutos = 1;
     adicionarProduto();
@@ -332,6 +335,7 @@ function abrirModalEditarPedido(id) {
     document.getElementById('hora-pedido').value = pedido.hora || '';
     document.getElementById('status-pedido').value = pedido.status;
     document.getElementById('campo-status').style.display = 'block';
+    document.querySelector(`input[name="pedido-requer-entrega"][value="${pedido.requerEntrega ? 'true' : 'false'}"]`).checked = true;
     document.getElementById('produtos-container').innerHTML = '';
     contadorProdutos = 1;
 
@@ -432,6 +436,11 @@ function calcularTotal() {
     return total;
 }
 
+function obterRequerEntregaPedido() {
+    const campoSelecionado = document.querySelector('input[name="pedido-requer-entrega"]:checked');
+    return !campoSelecionado || campoSelecionado.value !== 'false';
+}
+
 async function salvarPedido(event) {
     event.preventDefault();
 
@@ -474,6 +483,7 @@ async function salvarPedido(event) {
         clienteId: Number(clienteId),
         data: document.getElementById('data-pedido').value,
         hora: document.getElementById('hora-pedido').value,
+        requerEntrega: obterRequerEntregaPedido(),
         observacoes: document.getElementById('observacoes').value.trim(),
         status: pedidoEditando ? document.getElementById('status-pedido').value : 'pendente',
         produtos: produtosPedido
@@ -519,6 +529,7 @@ function verDetalhesPedido(id) {
         <div style="margin-bottom: 20px;">
             <p><strong>Pedido:</strong> #${pedido.id}</p>
             <p><strong>Data:</strong> ${formatarDataPedido(pedido.data)} ${pedido.hora ? 'às ' + pedido.hora : ''}</p>
+            <p><strong>Atendimento:</strong> ${pedido.requerEntrega ? 'Entrega' : 'Retirada'}</p>
             <p><strong>Status:</strong> <span class="badge-status ${obterClasseStatus(pedido.status)}">${obterTextoStatus(pedido.status)}</span></p>
         </div>
         <div style="margin-bottom: 20px; padding: 10px; background-color: #f8f9fa; border-radius: 5px;">
