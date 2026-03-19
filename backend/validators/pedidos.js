@@ -2,10 +2,11 @@ function validarStatusPedido(status) {
   return ['pendente', 'em-rota', 'entregue', 'ausente', 'cancelado'].includes(status);
 }
 
-async function validarPayloadPedido(payload) {
+async function validarPayloadPedido(payload, options = {}) {
+  const { requireClienteId = true } = options;
   const { clienteId, data, hora, status, produtos } = payload;
 
-  if (!clienteId || !data) {
+  if ((requireClienteId && !clienteId) || !data) {
     return 'Cliente e data do pedido sao obrigatorios';
   }
 

@@ -1,12 +1,27 @@
 const express = require('express');
 const { getPool } = require('../db');
-const { authMiddleware } = require('../middlewares/auth');
+const { authMiddleware, requireRole } = require('../middlewares/auth');
 const { listarEntregas } = require('../services/pedidos');
 
 const router = express.Router();
 
 // Aplicar middleware de autenticação a todas as rotas
 router.use(authMiddleware);
+
+async function pedidoPertenceAoEntregador(pedidoId, entregadorId) {
+  const pool = getPool();
+  const [rows] = await pool.query(
+    `
+      SELECT id
+      FROM pedidos
+      WHERE id = ? AND entregador_id = ?
+      LIMIT 1
+    `,
+    [pedidoId, entregadorId]
+  );
+
+  return rows.length > 0;
+}
 
 /**
  * @swagger
@@ -89,7 +104,7 @@ router.use(authMiddleware);
  *       500:
  *         description: Erro interno do servidor
  */
-router.get('/dashboard/indicadores', async (_req, res) => {
+router.get('/dashboard/indicadores', requireRole(['admin']), async (_req, res) => {
   try {
     const pool = getPool();
     const [[indicadores]] = await pool.query(
@@ -139,7 +154,7 @@ router.get('/dashboard/indicadores', async (_req, res) => {
  *       500:
  *         description: Erro interno do servidor
  */
-router.get('/entregas/hoje', async (req, res) => {
+router.get('/entregas/hoje', requireRole(['admin', 'entregador']), async (req, res) => {
   try {
     const entregas = await listarEntregas({
       entregadorId: req.usuario.id,
@@ -156,7 +171,7 @@ router.get('/entregas/hoje', async (req, res) => {
   }
 });
 
-router.get('/entregas/hoje/pontos', async (req, res) => {
+router.get('/entregas/hoje/pontos', requireRole(['admin', 'entregador']), async (req, res) => {
   try {
     const entregas = await listarEntregas({
       entregadorId: req.usuario.id,
@@ -183,7 +198,7 @@ router.get('/entregas/hoje/pontos', async (req, res) => {
   }
 });
 
-router.get('/entregador/entregas', async (req, res) => {
+router.get('/entregador/entregas', requireRole(['admin', 'entregador']), async (req, res) => {
   try {
     const entregas = await listarEntregas({
       entregadorId: req.usuario.id,
@@ -200,7 +215,7 @@ router.get('/entregador/entregas', async (req, res) => {
   }
 });
 
-router.get('/entregas/pendentes/pontos', async (req, res) => {
+router.get('/entregas/pendentes/pontos', requireRole(['admin', 'entregador']), async (req, res) => {
   try {
     const entregas = await listarEntregas({
       entregadorId: req.usuario.id,
@@ -230,7 +245,7 @@ router.get('/entregas/pendentes/pontos', async (req, res) => {
   }
 });
 
-router.get('/entregas/pendentes', async (req, res) => {
+router.get('/entregas/pendentes', requireRole(['admin', 'entregador']), async (req, res) => {
   try {
     const entregas = await listarEntregas({
       entregadorId: req.usuario.id,
@@ -286,7 +301,7 @@ router.get('/entregas/pendentes', async (req, res) => {
  *       500:
  *         description: Erro interno do servidor
  */
-router.put('/entregas/:id/status', async (req, res) => {
+router.put('/entregas/:id/status', requireRole(['admin', 'entregador']), async (req, res) => {
   try {
     const id = Number(req.params.id);
     const { status } = req.body;
@@ -300,6 +315,17 @@ router.put('/entregas/:id/status', async (req, res) => {
     }
 
     const pool = getPool();
+
+    if (req.usuario.tipo !== 'admin') {
+      const pertenceAoEntregador = await pedidoPertenceAoEntregador(id, req.usuario.id);
+      if (!pertenceAoEntregador) {
+        return res.status(403).json({
+          sucesso: false,
+          mensagem: 'Acesso nao autorizado'
+        });
+      }
+    }
+
     const [result] = await pool.query(
       `
         UPDATE pedidos
@@ -339,7 +365,7 @@ router.put('/entregas/:id/status', async (req, res) => {
   }
 });
 
-router.get('/entregador/localizacao', async (req, res) => {
+router.get('/entregador/localizacao', requireRole(['admin', 'entregador']), async (req, res) => {
   try {
     const pool = getPool();
     const entregadorId = req.usuario.tipo === 'admin' ? 2 : req.usuario.id;
@@ -371,7 +397,7 @@ router.get('/entregador/localizacao', async (req, res) => {
   }
 });
 
-router.post('/entregador/localizacao', async (req, res) => {
+router.post('/entregador/localizacao', requireRole(['entregador']), async (req, res) => {
   try {
     const { latitude, longitude, timestamp } = req.body;
 

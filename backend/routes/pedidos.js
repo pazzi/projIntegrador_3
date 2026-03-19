@@ -132,7 +132,7 @@ router.use(authMiddleware);
  *       500:
  *         description: Erro interno do servidor
  */
-router.get('/pedidos', async (_req, res) => {
+router.get('/pedidos', requireRole(['admin']), async (_req, res) => {
   try {
     const pedidos = await montarPedidos();
     return res.json(pedidos);
@@ -222,7 +222,7 @@ router.get('/pedidos', async (_req, res) => {
  *       500:
  *         description: Erro interno do servidor
  */
-router.get('/pedidos/:id', async (req, res) => {
+router.get('/pedidos/:id', requireRole(['admin']), async (req, res) => {
   try {
     const pedido = await buscarPedidoPorId(Number(req.params.id));
 
@@ -243,7 +243,7 @@ router.get('/pedidos/:id', async (req, res) => {
   }
 });
 
-router.post('/pedidos', async (req, res) => {
+router.post('/pedidos', requireRole(['admin']), async (req, res) => {
   const erroValidacao = await validarPayloadPedido(req.body);
   if (erroValidacao) {
     return res.status(400).json({
@@ -296,7 +296,7 @@ router.post('/pedidos', async (req, res) => {
   }
 });
 
-router.put('/pedidos/:id', async (req, res) => {
+router.put('/pedidos/:id', requireRole(['admin']), async (req, res) => {
   const erroValidacao = await validarPayloadPedido(req.body);
   if (erroValidacao) {
     return res.status(400).json({
@@ -359,7 +359,7 @@ router.put('/pedidos/:id', async (req, res) => {
   }
 });
 
-router.delete('/pedidos/:id', async (req, res) => {
+router.delete('/pedidos/:id', requireRole(['admin']), async (req, res) => {
   try {
     const pool = getPool();
     const [result] = await pool.query('DELETE FROM pedidos WHERE id = ?', [Number(req.params.id)]);
@@ -507,7 +507,7 @@ router.get('/cliente/pedidos', requireRole(['outros']), async (req, res) => {
 });
 
 router.post('/cliente/pedidos', requireRole(['outros']), async (req, res) => {
-  const erroValidacao = await validarPayloadPedido(req.body);
+  const erroValidacao = await validarPayloadPedido(req.body, { requireClienteId: false });
   if (erroValidacao) {
     return res.status(400).json({
       sucesso: false,
